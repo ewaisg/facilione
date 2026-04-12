@@ -21,6 +21,7 @@ export interface Project {
   orgId: string
   oracleParentProject: string
   oracleProjectNumber: string | null
+  sfProjectId?: number // SiteFolio project ID for sync linking
   currentPhaseIndex: number
   totalBudget: number
   committedCost: number

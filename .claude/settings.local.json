@@ -12,7 +12,12 @@
       "Bash(ls -la /c/Users/Administrator/IdeaProjects/facilione/src/app/api/ai/*/route.ts)",
       "Bash([ -d \"src/app/\\(app\\)/$d\" ])",
       "Bash(npm install:*)",
-      "Bash(npx playwright:*)"
+      "Bash(npx playwright:*)",
+      "Bash(xargs grep:*)",
+      "Bash(node -e \"console.log\\(require\\('cheerio/package.json'\\).version\\)\")",
+      "Bash(node -e \"const c = require\\('cheerio'\\); console.log\\(Object.keys\\(c\\)\\)\")",
+      "Bash(node -e \"const c = require\\('cheerio'\\); const doc = c.load\\('<p>hi</p>'\\); const el = doc\\('p'\\)[0]; console.log\\(typeof el, el?.constructor?.name\\)\")",
+      "Bash(npx eslint:*)"
     ]
   },
   "hooks": {
@@ -22,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"C:/Users/Administrator/IdeaProjects/facilione/.claude/hooks/post-tool-call.py\""
+            "command": "python3 \"C:/Users/Ewais/IdeaProjects/facilione/.claude/hooks/post-tool-call.py\""
           }
         ]
       }

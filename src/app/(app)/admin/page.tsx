@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -16,7 +17,7 @@ import {
 import {
   ShieldCheck, UserPlus, Loader2, Copy, Check, AlertTriangle,
   Users, FolderKanban, Trash2, Pencil, RefreshCw,
-  CheckCircle2, XCircle, Bot,
+  CheckCircle2, XCircle, Bot, Globe,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -119,7 +120,7 @@ interface AdminAiConfig {
   }
 }
 
-const ADMIN_TABS = new Set(["users", "projects", "ai-setup"])
+const ADMIN_TABS = new Set(["users", "projects", "ai-setup", "sitefolio"])
 
 function EstimateLoaderTab() {
   const [projectId, setProjectId] = useState("")
@@ -208,7 +209,7 @@ export default function AdminPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users" className="gap-1.5 text-xs">
             <Users className="size-3.5" /> Users
           </TabsTrigger>
@@ -218,11 +219,15 @@ export default function AdminPage() {
           <TabsTrigger value="ai-setup" className="gap-1.5 text-xs">
             <Bot className="size-3.5" /> AI Setup
           </TabsTrigger>
+          <TabsTrigger value="sitefolio" className="gap-1.5 text-xs">
+            <Globe className="size-3.5" /> SiteFolio
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="projects"><ProjectsTab /><EstimateLoaderTab /></TabsContent>
         <TabsContent value="ai-setup"><AiSetupTab /></TabsContent>
+        <TabsContent value="sitefolio"><SiteFolioTab /></TabsContent>
       </Tabs>
     </div>
   )
@@ -1549,6 +1554,348 @@ function AiSetupTab() {
         </CardContent>
       </Card>
 
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════
+// SITEFOLIO TAB
+// ══════════════════════════════════════════════
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}hr ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
+
+interface SiteFolioSessionStatus {
+  active: boolean
+  memberId?: number
+  enterpriseId?: number
+  obtainedAt?: string
+  expiresAt?: string
+  expiresInDays?: number
+}
+
+interface SiteFolioProjectMapping {
+  projectId: string
+  storeNumber: string
+  storeName: string
+  sfProjectId: number
+  syncMeta: {
+    lastSyncAt: string
+    lastSyncStatus: string
+    syncedPages: string[]
+  } | null
+}
+
+interface SiteFolioSyncStatus {
+  projects: SiteFolioProjectMapping[]
+  lastGlobalSync: string | null
+}
+
+interface SiteFolioSyncResult {
+  totalFound: number
+  synced: number
+  skipped: number
+  errors: { projectNumber: string; error: string }[]
+}
+
+function SiteFolioTab() {
+  const [sessionStatus, setSessionStatus] = useState<SiteFolioSessionStatus | null>(null)
+  const [sessionLoading, setSessionLoading] = useState(true)
+  const [syncStatus, setSyncStatus] = useState<SiteFolioSyncStatus | null>(null)
+  const [syncLoading, setSyncLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<SiteFolioSyncResult | null>(null)
+  const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null)
+
+  const loadSessionStatus = useCallback(async () => {
+    setSessionLoading(true)
+    try {
+      const res = await fetch("/api/sitefolio/auth")
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Failed to load session status")
+      setSessionStatus(data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load session status"
+      toast.error(message)
+      setSessionStatus(null)
+    } finally {
+      setSessionLoading(false)
+    }
+  }, [])
+
+  const loadSyncStatus = useCallback(async () => {
+    setSyncLoading(true)
+    try {
+      const res = await fetch("/api/sitefolio/sync/status")
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Failed to load sync status")
+      setSyncStatus(data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load sync status"
+      toast.error(message)
+      setSyncStatus(null)
+    } finally {
+      setSyncLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadSessionStatus() }, [loadSessionStatus])
+  useEffect(() => { loadSyncStatus() }, [loadSyncStatus])
+
+  const handleSyncAll = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const res = await fetch("/api/sitefolio/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Sync failed")
+      setSyncResult(data)
+      toast.success(`Sync complete: ${data.synced} synced, ${data.skipped} skipped`)
+      loadSyncStatus()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Sync failed"
+      toast.error(message)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const handleSyncProject = async (projectId: string) => {
+    setSyncingProjectId(projectId)
+    try {
+      const res = await fetch("/api/sitefolio/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Project sync failed")
+      toast.success("Project synced successfully")
+      loadSyncStatus()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Project sync failed"
+      toast.error(message)
+    } finally {
+      setSyncingProjectId(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4 mt-4">
+      {/* ── Connection Status ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="size-4" /> SiteFolio Connection
+          </CardTitle>
+          <CardDescription>
+            Session status for the SiteFolio integration.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {sessionLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : sessionStatus ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-24 shrink-0">Status</span>
+                {sessionStatus.active ? (
+                  <Badge variant="outline" className="gap-1 border-emerald-200 bg-emerald-50 text-emerald-700">
+                    <CheckCircle2 className="size-3" /> Connected
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1 border-red-200 bg-red-50 text-red-700">
+                    <XCircle className="size-3" /> Disconnected
+                  </Badge>
+                )}
+              </div>
+              {sessionStatus.memberId && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Member ID</span>
+                  <span className="text-sm font-medium">{sessionStatus.memberId}</span>
+                </div>
+              )}
+              {sessionStatus.enterpriseId && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Enterprise ID</span>
+                  <span className="text-sm font-medium">{sessionStatus.enterpriseId}</span>
+                </div>
+              )}
+              {sessionStatus.expiresAt && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Expires</span>
+                  <span className="text-sm font-medium">
+                    {new Date(sessionStatus.expiresAt).toLocaleDateString()}
+                    {sessionStatus.expiresInDays != null && (
+                      <span className="text-muted-foreground ml-1">({sessionStatus.expiresInDays} days remaining)</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {!sessionStatus.active && (
+                <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 rounded-md p-2 mt-2">
+                  <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
+                  Run the SiteFolio refresh script locally to re-establish the session.
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">Unable to retrieve session status.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Sync Controls ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <RefreshCw className="size-4" /> Data Sync
+          </CardTitle>
+          <CardDescription>
+            Trigger a full sync or view the last sync result.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Last Global Sync:</span>
+            <span className="text-sm font-medium">
+              {syncLoading ? (
+                <Loader2 className="size-3.5 animate-spin inline" />
+              ) : syncStatus?.lastGlobalSync ? (
+                relativeTime(syncStatus.lastGlobalSync)
+              ) : (
+                "Never"
+              )}
+            </span>
+          </div>
+
+          <Button onClick={handleSyncAll} disabled={syncing || sessionLoading || !sessionStatus?.active}>
+            {syncing ? (
+              <><Loader2 className="size-4 animate-spin" /> Syncing...</>
+            ) : (
+              <><RefreshCw className="size-4" /> Sync All Projects</>
+            )}
+          </Button>
+
+          {syncResult && (
+            <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+              <p className="text-sm font-medium">Sync Results</p>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <span>Found: <strong>{syncResult.totalFound}</strong></span>
+                <span>Synced: <strong className="text-emerald-700">{syncResult.synced}</strong></span>
+                <span>Skipped: <strong className="text-muted-foreground">{syncResult.skipped}</strong></span>
+                <span>Errors: <strong className={syncResult.errors.length > 0 ? "text-red-700" : "text-muted-foreground"}>{syncResult.errors.length}</strong></span>
+              </div>
+              {syncResult.errors.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  {syncResult.errors.map((err, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-red-700 bg-red-50 rounded-md p-2">
+                      <XCircle className="size-3.5 shrink-0 mt-0.5" />
+                      <span><strong>{err.projectNumber}:</strong> {err.error}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Project Mapping Table ── */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base">
+            Project Mapping {syncStatus ? `(${syncStatus.projects.length} linked)` : ""}
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={loadSyncStatus} disabled={syncLoading}>
+            <RefreshCw className={cn("size-3.5", syncLoading && "animate-spin")} /> Refresh
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {syncLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : !syncStatus || syncStatus.projects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-2">
+              <Globe className="size-8 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">No projects linked to SiteFolio yet.</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {/* Table Header */}
+              <div className="grid grid-cols-[80px_80px_1fr_100px_90px_70px] gap-3 px-6 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
+                <span>SF Project</span>
+                <span>Store #</span>
+                <span>Store Name</span>
+                <span>Last Synced</span>
+                <span>Status</span>
+                <span>Actions</span>
+              </div>
+              {/* Table Rows */}
+              {syncStatus.projects.map((p) => (
+                <div
+                  key={p.projectId}
+                  className="grid grid-cols-[80px_80px_1fr_100px_90px_70px] gap-3 px-6 py-3 items-center hover:bg-muted/30 transition-colors"
+                >
+                  <span className="text-sm font-mono">{p.sfProjectId}</span>
+                  <span className="text-sm">{p.storeNumber}</span>
+                  <span className="text-sm truncate">{p.storeName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {p.syncMeta?.lastSyncAt ? relativeTime(p.syncMeta.lastSyncAt) : "Never"}
+                  </span>
+                  <span>
+                    {p.syncMeta?.lastSyncStatus === "success" ? (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-emerald-200 bg-emerald-50 text-emerald-700">
+                        <CheckCircle2 className="size-2.5" /> Success
+                      </Badge>
+                    ) : p.syncMeta?.lastSyncStatus === "partial" ? (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-amber-200 bg-amber-50 text-amber-700">
+                        <AlertTriangle className="size-2.5" /> Partial
+                      </Badge>
+                    ) : p.syncMeta?.lastSyncStatus === "error" ? (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-red-200 bg-red-50 text-red-700">
+                        <XCircle className="size-2.5" /> Error
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">--</span>
+                    )}
+                  </span>
+                  <span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => handleSyncProject(p.projectId)}
+                      disabled={syncingProjectId === p.projectId || syncing}
+                    >
+                      {syncingProjectId === p.projectId ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <><RefreshCw className="size-3" /> Sync</>
+                      )}
+                    </Button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

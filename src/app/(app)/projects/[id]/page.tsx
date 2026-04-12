@@ -27,6 +27,8 @@ import { toast } from "sonner"
 import { CopilotInlinePanel } from "@/components/copilot/inline-panel"
 import { AiWeeklyStatus } from "@/components/reports/ai-weekly-status"
 import { AiScheduleStatus } from "@/components/reports/ai-schedule-status"
+import { SfSyncedSchedule } from "@/components/sitefolio/sf-synced-schedule"
+import { SfOverviewPanel } from "@/components/sitefolio/sf-overview-panel"
 
 function PlaceholderTab({ label, icon: Icon, note }: { label: string; icon: React.ElementType; note?: string }) {
   return (
@@ -228,6 +230,11 @@ export default function ProjectDetailPage() {
           <div className="flex-1 overflow-y-auto">
             {/* Schedule Tab — now includes both Gantt and SiteFolio Schedule */}
             <TabsContent value="schedule" className="p-6 max-w-7xl mx-auto mt-0 space-y-6">
+              {/* SiteFolio Overview Panel */}
+              {project.sfProjectId && (
+                <SfOverviewPanel projectId={id} />
+              )}
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   { label: "Grand Opening", value: project.grandOpeningDate ? formatDate(project.grandOpeningDate) : "TBD" },
@@ -244,7 +251,12 @@ export default function ProjectDetailPage() {
                 ))}
               </div>
 
-              {/* SiteFolio Schedule Panel */}
+              {/* SiteFolio Synced Schedule */}
+              {project.sfProjectId && (
+                <SfSyncedSchedule projectId={id} />
+              )}
+
+              {/* SiteFolio Schedule Panel (template-based) */}
               {sfTemplate && (
                 <SfSchedulePanel
                   projectType={project.projectType as ProjectType}
