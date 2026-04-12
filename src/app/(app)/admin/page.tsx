@@ -1798,9 +1798,9 @@ function SiteFolioTab() {
                 <span>Found: <strong>{syncResult.totalFound}</strong></span>
                 <span>Synced: <strong className="text-emerald-700">{syncResult.synced}</strong></span>
                 <span>Skipped: <strong className="text-muted-foreground">{syncResult.skipped}</strong></span>
-                <span>Errors: <strong className={syncResult.errors.length > 0 ? "text-red-700" : "text-muted-foreground"}>{syncResult.errors.length}</strong></span>
+                <span>Errors: <strong className={(syncResult.errors?.length ?? 0) > 0 ? "text-red-700" : "text-muted-foreground"}>{syncResult.errors?.length ?? 0}</strong></span>
               </div>
-              {syncResult.errors.length > 0 && (
+              {(syncResult.errors?.length ?? 0) > 0 && (
                 <div className="space-y-1 mt-2">
                   {syncResult.errors.map((err, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-red-700 bg-red-50 rounded-md p-2">

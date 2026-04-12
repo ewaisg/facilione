@@ -33,7 +33,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
 
       await syncProject(sfProjectId, body.projectId)
-      return NextResponse.json({ ok: true, result: { synced: 1 } })
+      return NextResponse.json({
+        ok: true,
+        result: { totalFound: 1, synced: 1, skipped: 0, errors: [] },
+      })
     }
 
     // Direct sync by sfProjectId + facilOneProjectId pair
@@ -42,7 +45,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       typeof body.facilOneProjectId === "string"
     ) {
       await syncProject(body.sfProjectId, body.facilOneProjectId)
-      return NextResponse.json({ ok: true, result: { synced: 1 } })
+      return NextResponse.json({
+        ok: true,
+        result: { totalFound: 1, synced: 1, skipped: 0, errors: [] },
+      })
     }
 
     // Full sync — all projects
