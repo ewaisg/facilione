@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npx next:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(ls -la /c/Users/Administrator/IdeaProjects/facilione/src/app/api/ai/copilot/*/route.ts)",
+      "Bash(ls -la /c/Users/Administrator/IdeaProjects/facilione/src/app/api/ai/*/route.ts)",
+      "Bash([ -d \"src/app/\\(app\\)/$d\" ])",
+      "Bash(npm install:*)",
+      "Bash(npx playwright:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"C:/Users/Administrator/IdeaProjects/facilione/.claude/hooks/post-tool-call.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

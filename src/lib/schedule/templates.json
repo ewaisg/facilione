@@ -1,0 +1,1424 @@
+{
+  "NS": {
+    "projectType": "NS",
+    "phases": [
+      {
+        "phaseNumber": 1,
+        "name": "Evaluation",
+        "milestones": [
+          {
+            "description": "Project Identified",
+            "weekOffset": -113,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Preliminary Site Plan Received",
+            "weekOffset": -109,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Approval Received",
+            "weekOffset": -86,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 2,
+        "name": "Due Diligence / Entitlements",
+        "milestones": [
+          {
+            "description": "Due Diligence Started",
+            "weekOffset": -105,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Due Diligence Completed",
+            "weekOffset": -83,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Revised Final Fixture Plan Received",
+            "weekOffset": -84,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Fixture Plan Reviewed (FM only)",
+            "weekOffset": -86,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permitting Completed",
+            "weekOffset": -50,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 3,
+        "name": "Fixture Plan Development",
+        "milestones": [
+          {
+            "description": "Preliminary Fixture Plan Requested",
+            "weekOffset": -93,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Fixture Plan Received",
+            "weekOffset": -71,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 4,
+        "name": "Design Development",
+        "milestones": [
+          {
+            "description": "Final Fixture Plan to Architect",
+            "weekOffset": -83,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Architect Authorized",
+            "weekOffset": -74,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Received",
+            "weekOffset": -63,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "CDs Submitted for Permits",
+            "weekOffset": -56,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 5,
+        "name": "Internal Approval",
+        "milestones": [
+          {
+            "description": "Final Fixture Plan Approved",
+            "weekOffset": -86,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Capital Appropriation Approval Received",
+            "weekOffset": -57,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Property Closed/Lease Signed",
+            "weekOffset": -54,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Solicited",
+            "weekOffset": -56,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Received",
+            "weekOffset": -45,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 6,
+        "name": "Construction",
+        "milestones": [
+          {
+            "description": "Sitework/Demolition Started",
+            "weekOffset": -43,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Direct Buy Items (incl. Refrigeration) Ordered",
+            "weekOffset": -43,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Building Construction/Footers Started",
+            "weekOffset": -36,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Fixtures Ordered",
+            "weekOffset": -30,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Roof Completed",
+            "weekOffset": -26,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Colored Slab Poured",
+            "weekOffset": -22,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Building Shell Completed (In the dry)",
+            "weekOffset": -21,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permanent Utilities Completed",
+            "weekOffset": -17,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sitework Completed",
+            "weekOffset": -14,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Offsite Work Completed",
+            "weekOffset": -14,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Temporary Certificate of Occupancy Received",
+            "weekOffset": -13,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Completed",
+            "weekOffset": -13,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 7,
+        "name": "Fixturing",
+        "milestones": [
+          {
+            "description": "Fixturing Started",
+            "weekOffset": -10,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Certificate of Occupancy Received",
+            "weekOffset": -5,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Merchandising Started",
+            "weekOffset": -4,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Safety Assured/Approved",
+            "weekOffset": -2,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Completed",
+            "weekOffset": -2,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 8,
+        "name": "Project Close-Out",
+        "milestones": [
+          {
+            "description": "Grand Opened",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      }
+    ]
+  },
+  "ER": {
+    "projectType": "ER",
+    "phases": [
+      {
+        "phaseNumber": 1,
+        "name": "Evaluation",
+        "milestones": [
+          {
+            "description": "Project Identified",
+            "weekOffset": -122,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Preliminary Site Plan Received",
+            "weekOffset": -118,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Scope Recommendations Received",
+            "weekOffset": -112,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Preliminary Estimate Completed",
+            "weekOffset": -100,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Preliminary Sales Budget Completed",
+            "weekOffset": -98,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Approval Received",
+            "weekOffset": -93,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 2,
+        "name": "Due Diligence / Entitlements",
+        "milestones": [
+          {
+            "description": "As-built Fixture Plan Survey Started",
+            "weekOffset": -114,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "As-built Fixture Plan Survey Received",
+            "weekOffset": -113,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Topographic Survey Received",
+            "weekOffset": -101,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Site Plan Developed / Received",
+            "weekOffset": -97,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Due Diligence Completed",
+            "weekOffset": -89,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Site Plan Approved",
+            "weekOffset": -85,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Revised Final Fixture Plan Received",
+            "weekOffset": -66,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permits Received",
+            "weekOffset": -45,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 3,
+        "name": "Fixture Plan Development",
+        "milestones": [
+          {
+            "description": "As-built Fixture Plan Requested",
+            "weekOffset": -112,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "As-built Fixture Plan Received",
+            "weekOffset": -108,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Preliminary Fixture Plan Requested",
+            "weekOffset": -107,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Pre-final Fixture Plan Walk-through Completed",
+            "weekOffset": -94,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Fixture Plan Received",
+            "weekOffset": -75,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 4,
+        "name": "Real Estate",
+        "milestones": [
+          {
+            "description": "Property Negotiation Initiated",
+            "weekOffset": -103,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "RE Documents Completed",
+            "weekOffset": -68,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Property Closed/Lease Signed",
+            "weekOffset": -63,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 5,
+        "name": "Design Development",
+        "milestones": [
+          {
+            "description": "Final Fixture Plan to Architect",
+            "weekOffset": -73,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Refrigeration Plans Requested",
+            "weekOffset": -73,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Refrigeration Plans Received",
+            "weekOffset": -69,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Architect Authorized",
+            "weekOffset": -69,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Received",
+            "weekOffset": -58,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Submitted for Permits",
+            "weekOffset": -49,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 6,
+        "name": "Internal Approval",
+        "milestones": [
+          {
+            "description": "Pre-construction CA Approved",
+            "weekOffset": -111,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Fixture Plan Approved",
+            "weekOffset": -74,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Scope of Work Finalized",
+            "weekOffset": -71,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Estimate Completed",
+            "weekOffset": -70,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sales Budget Completed",
+            "weekOffset": -69,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Capital Appropriation Submitted for Approval",
+            "weekOffset": -68,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Capital Appropriation Approval Received",
+            "weekOffset": -64,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Solicited",
+            "weekOffset": -49,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Received",
+            "weekOffset": -45,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 7,
+        "name": "Construction / Fixturing",
+        "milestones": [
+          {
+            "description": "Direct Buy Items (incl. Refrigeration) Ordered",
+            "weekOffset": -61,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sitework/Demolition Started",
+            "weekOffset": -43,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Fixtures Ordered",
+            "weekOffset": -43,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Building Construction/Footers Started",
+            "weekOffset": -39,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Roof Completed",
+            "weekOffset": -29,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Building Shell Completed (In the dry)",
+            "weekOffset": -27,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Exterior Completed",
+            "weekOffset": -23,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Temporary Certificate of Occupancy Received",
+            "weekOffset": -22,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Expansion Opened",
+            "weekOffset": -19,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Product Resets Completed",
+            "weekOffset": -9,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sitework Completed",
+            "weekOffset": -7,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction / Fixturing Completed",
+            "weekOffset": -5,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Safety Assured/Approved",
+            "weekOffset": -3,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Certificate of Occupancy Received",
+            "weekOffset": -2,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Completed",
+            "weekOffset": -1,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 8,
+        "name": "Project Close-Out",
+        "milestones": [
+          {
+            "description": "Grand Opening",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      }
+    ]
+  },
+  "WIW": {
+    "projectType": "WIW",
+    "phases": [
+      {
+        "phaseNumber": 1,
+        "name": "Evaluation",
+        "milestones": [
+          {
+            "description": "Project Identified",
+            "weekOffset": -86,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "As-built Fixture Plan Requested",
+            "weekOffset": -69,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Scope Recommendations Received",
+            "weekOffset": -71,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Pre-construction CA Approved",
+            "weekOffset": -70,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Estimate Completed",
+            "weekOffset": -42,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sales Budget Completed",
+            "weekOffset": -41,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Approval Received",
+            "weekOffset": -37,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 2,
+        "name": "Due Diligence / Entitlements",
+        "milestones": [
+          {
+            "description": "As-built Fixture Plan Survey Started",
+            "weekOffset": -78,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "As-built Fixture Plan Survey Received",
+            "weekOffset": -72,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "As-built Fixture Plan Received",
+            "weekOffset": -66,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Due Diligence Completed",
+            "weekOffset": -58,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permits Received",
+            "weekOffset": -24,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 3,
+        "name": "Fixture Plan Development",
+        "milestones": [
+          {
+            "description": "Preliminary Fixture Plan Requested",
+            "weekOffset": -64,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Pre-final Fixture Plan Walk-through Completed",
+            "weekOffset": -50,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Fixture Plan Received",
+            "weekOffset": -46,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 4,
+        "name": "Design Development",
+        "milestones": [
+          {
+            "description": "Final Fixture Plan to Architect",
+            "weekOffset": -43,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Refrigeration Plans Requested",
+            "weekOffset": -42,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Refrigeration Plans Received",
+            "weekOffset": -37,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Architect Authorized",
+            "weekOffset": -37,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Received",
+            "weekOffset": -31,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Submitted for Permits",
+            "weekOffset": -28,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 5,
+        "name": "Internal Approval",
+        "milestones": [
+          {
+            "description": "Final Fixture Plan Approved",
+            "weekOffset": -44,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Scope of Work Finalized",
+            "weekOffset": -43,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Budget Submitted for Approval",
+            "weekOffset": -40,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Capital Appropriation Approval Received",
+            "weekOffset": -36,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Landlord Approval Received / LMA Signed",
+            "weekOffset": -31,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Solicited",
+            "weekOffset": -28,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Received",
+            "weekOffset": -25,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 6,
+        "name": "Construction / Fixturing",
+        "milestones": [
+          {
+            "description": "Direct Buy Items (incl. Refrigeration) Ordered",
+            "weekOffset": -33,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Fixtures Ordered",
+            "weekOffset": -29,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Demolition / Refrigeration Prep Started",
+            "weekOffset": -21,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Started",
+            "weekOffset": -20,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Exterior Completed",
+            "weekOffset": -6,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Product Resets Completed",
+            "weekOffset": -4,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction / Fixturing Completed",
+            "weekOffset": -3,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Safety Assured/Approved",
+            "weekOffset": -1,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Completed",
+            "weekOffset": -1,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 7,
+        "name": "Project Close-Out",
+        "milestones": [
+          {
+            "description": "Grand Opening",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      }
+    ]
+  },
+  "FC": {
+    "projectType": "FC",
+    "phases": [
+      {
+        "phaseNumber": 1,
+        "name": "Evaluation",
+        "milestones": [
+          {
+            "description": "Project Identified",
+            "weekOffset": -61,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Preliminary Site Plan Developed",
+            "weekOffset": -59,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Site Conceptually Reviewed with SPG",
+            "weekOffset": -57,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Market Research Ordered",
+            "weekOffset": -56,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Market Research Received",
+            "weekOffset": -52,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Approval Received",
+            "weekOffset": -32,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 2,
+        "name": "Due Diligence / Entitlements",
+        "milestones": [
+          {
+            "description": "Due Diligence Started",
+            "weekOffset": -51,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Due Diligence Completed",
+            "weekOffset": -43,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permits Received",
+            "weekOffset": -15,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 3,
+        "name": "Site Plan Development",
+        "milestones": [
+          {
+            "description": "Preliminary Site Plan Approved by SPG",
+            "weekOffset": -46,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Site Plan Developed / Received",
+            "weekOffset": -42,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Site Plan Approved",
+            "weekOffset": -29,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 4,
+        "name": "Real Estate",
+        "milestones": [
+          {
+            "description": "Property Negotiation Initiated",
+            "weekOffset": -51,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "RE Documents Completed",
+            "weekOffset": -25,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Property Closed/Lease Signed",
+            "weekOffset": -24,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 5,
+        "name": "Internal Approval",
+        "milestones": [
+          {
+            "description": "Pre-construction CA Approved",
+            "weekOffset": -51,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Estimate Completed",
+            "weekOffset": -41,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sales Budget Completed",
+            "weekOffset": -37,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "SPG Approval Received",
+            "weekOffset": -34,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Budget Submitted for Approval",
+            "weekOffset": -33,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Capital Appropriation Approval Received",
+            "weekOffset": -25,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 6,
+        "name": "Design and Construction",
+        "milestones": [
+          {
+            "description": "Civil Engineer / Architect Authorized",
+            "weekOffset": -28,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Received",
+            "weekOffset": -22,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Documents Submitted for Permits",
+            "weekOffset": -21,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Tanks/Canopy/Equipment Ordered",
+            "weekOffset": -23,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Received",
+            "weekOffset": -18,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sitework/Demolition Started",
+            "weekOffset": -14,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Tanks Buried",
+            "weekOffset": -13,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Building Construction/Footers Started",
+            "weekOffset": -9,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Concrete Paving Completed",
+            "weekOffset": -7,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Canopy Completed",
+            "weekOffset": -5,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permanent Utilities Completed",
+            "weekOffset": -4,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Sitework Completed",
+            "weekOffset": -3,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Temporary Certificate of Occupancy Received",
+            "weekOffset": -2,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Project Completed",
+            "weekOffset": -1,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      },
+      {
+        "phaseNumber": 7,
+        "name": "Project Close-Out",
+        "milestones": [
+          {
+            "description": "Opened for Business",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Grand Opened",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      }
+    ]
+  },
+  "MC": {
+    "projectType": "MC",
+    "phases": [
+      {
+        "phaseNumber": 1,
+        "name": "Minor Capital - Base",
+        "milestones": [
+          {
+            "description": "Project Identified",
+            "weekOffset": 0,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Final Fixture Plan Received",
+            "weekOffset": 0,
+            "isGate": false,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Permits Received",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Bids Received",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Capital Appropriation Approval Received",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction Started",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Construction / Fixturing Completed",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          },
+          {
+            "description": "Operation Went Live",
+            "weekOffset": 0,
+            "isGate": true,
+            "owner": null,
+            "system": null
+          }
+        ]
+      }
+    ]
+  }
+}

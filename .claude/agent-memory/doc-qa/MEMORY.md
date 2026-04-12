@@ -1,0 +1,1 @@
+- [QA Baseline Run](project_qa_baseline.md) -- First full verification results, common drift patterns, stable invariants
