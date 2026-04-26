@@ -6,6 +6,12 @@ import { Providers } from "@/components/providers";
 export const metadata: Metadata = {
   title: "FaciliOne",
   description: "Facilities Engineering PM Command Center",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+  },
 };
 
 export default function RootLayout({

@@ -31,6 +31,22 @@
         { "fieldPath": "costReviewId", "order": "ASCENDING" },
         { "fieldPath": "importedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "taskProjects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "orgId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "taskProjects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
