@@ -13,6 +13,11 @@ import {
 import { doc, getDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 import type { AppUser, UserRole } from "@/types"
+import {
+  createOrUpdateSession,
+  updateSessionActivity,
+  deleteAllUserSessions,
+} from "@/lib/firebase/sessions"
 
 interface AuthContextType {
   user: AppUser | null
@@ -20,6 +25,7 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  signOutAllDevices: () => Promise<void>
   sendResetEmail: (email: string) => Promise<void>
   updateUserPassword: (newPassword: string) => Promise<void>
 }
@@ -28,6 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Cache user profile in sessionStorage to avoid Firestore read on every page load
 const USER_CACHE_KEY = "facilione-user-cache"
+const SESSION_ID_KEY = "facilione-session-id"
 
 function getCachedUser(): AppUser | null {
   try {
@@ -46,6 +53,28 @@ function setCachedUser(user: AppUser | null) {
     } else {
       sessionStorage.removeItem(USER_CACHE_KEY)
     }
+  } catch {
+    // sessionStorage not available
+  }
+}
+
+function getOrCreateSessionId(): string {
+  try {
+    let sessionId = sessionStorage.getItem(SESSION_ID_KEY)
+    if (!sessionId) {
+      sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+      sessionStorage.setItem(SESSION_ID_KEY, sessionId)
+    }
+    return sessionId
+  } catch {
+    // sessionStorage not available, return temporary ID
+    return `temp-${Date.now()}`
+  }
+}
+
+function clearSessionId() {
+  try {
+    sessionStorage.removeItem(SESSION_ID_KEY)
   } catch {
     // sessionStorage not available
   }
@@ -96,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
   const profileFetchedRef = useRef<string | null>(null)
+  const activityTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const unsubscribeToken = onIdTokenChanged(auth, async (fbUser) => {
@@ -114,6 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fbUser) {
         const token = await fbUser.getIdToken()
         setSessionCookie(token)
+
+        // Track session
+        const sessionId = getOrCreateSessionId()
+        createOrUpdateSession(fbUser.uid, sessionId).catch((err) => {
+          console.error("Failed to create session:", err)
+        })
 
         // Use cached profile if available for the same UID — render instantly
         const cached = getCachedUser()
@@ -138,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Signed out
         clearSessionCookie()
+        clearSessionId()
         setUser(null)
         setCachedUser(null)
         profileFetchedRef.current = null
@@ -149,8 +186,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsubscribeToken()
       unsubscribe()
+      if (activityTimerRef.current) {
+        clearInterval(activityTimerRef.current)
+      }
     }
   }, [])
+
+  // Update session activity every 5 minutes
+  useEffect(() => {
+    if (!user) return
+
+    const sessionId = getOrCreateSessionId()
+
+    // Update activity immediately
+    updateSessionActivity(sessionId).catch((err) => {
+      console.error("Failed to update session activity:", err)
+    })
+
+    // Set up interval
+    activityTimerRef.current = setInterval(() => {
+      updateSessionActivity(sessionId).catch((err) => {
+        console.error("Failed to update session activity:", err)
+      })
+    }, 5 * 60 * 1000) // 5 minutes
+
+    return () => {
+      if (activityTimerRef.current) {
+        clearInterval(activityTimerRef.current)
+      }
+    }
+  }, [user])
 
   const signIn = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password)
@@ -160,10 +225,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     clearSessionCookie()
+    clearSessionId()
     setCachedUser(null)
     profileFetchedRef.current = null
     await firebaseSignOut(auth)
     setUser(null)
+  }
+
+  const signOutAllDevices = async () => {
+    if (!user) throw new Error("Not authenticated")
+
+    // Delete all sessions from Firestore
+    await deleteAllUserSessions(user.uid)
+
+    // Sign out locally
+    await signOut()
   }
 
   const sendResetEmail = async (email: string) => {
@@ -177,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, firebaseUser, loading, signIn, signOut, sendResetEmail, updateUserPassword }}
+      value={{ user, firebaseUser, loading, signIn, signOut, signOutAllDevices, sendResetEmail, updateUserPassword }}
     >
       {children}
     </AuthContext.Provider>

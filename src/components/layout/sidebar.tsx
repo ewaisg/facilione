@@ -15,6 +15,7 @@ import {
   ChevronRight,
   FileText,
   GitBranch,
+  CheckSquare,
 } from "lucide-react"
 import { cn, getInitials } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -35,6 +36,7 @@ export interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Projects", href: "/projects", icon: FolderKanban },
+  { label: "Tasks", href: "/tasks", icon: CheckSquare },
   { label: "Team", href: "/team", icon: Users },
   { label: "FE Copilot", href: "/fe-copilot", icon: Bot },
   { label: "Smart Tools", href: "/smart-tools", icon: Wrench },

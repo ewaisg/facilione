@@ -9,6 +9,9 @@ export * from "./sop"
 export * from "./estimate"
 export * from "./ai-session"
 export * from "./sitefolio"
+export * from "./dashboard"
+export * from "./session"
+export * from "./task"
 
 // Re-export constants for backward compatibility with existing imports
 export {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/firebase/auth-context"
-import { getLatestProjectWeeklyUpdate, subscribeToProjects } from "@/lib/firebase/firestore"
+import { getLatestProjectWeeklyUpdate, subscribeToProjects, getPortfolioAiCache, savePortfolioAiCache } from "@/lib/firebase/firestore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -163,21 +163,24 @@ export default function DashboardPage() {
     .slice(0, 8)
 
   const aiFetchedRef = useRef(false)
+  const cacheCheckedRef = useRef(false)
 
-  const generatePortfolioAI = useCallback(async () => {
-    if (aiLoading) return
+  const generatePortfolioAI = useCallback(async (_forceRefresh = false) => {
+    if (aiLoading || !user) return
     setAiLoading(true)
     try {
+      const metricsSnapshot = {
+        activeProjects: activeProjects.length,
+        totalBudget,
+        atRiskCount,
+        overdueGoCount,
+        dueSoonGoCount,
+        scheduleOverdueCount,
+        weeklyStaleCount,
+      }
+
       const payload = {
-        metrics: {
-          activeProjects: activeProjects.length,
-          totalBudget,
-          atRiskCount,
-          overdueGoCount,
-          dueSoonGoCount,
-          scheduleOverdueCount,
-          weeklyStaleCount,
-        },
+        metrics: metricsSnapshot,
         alerts: alerts.map((a) => ({ title: a.title, detail: a.detail, level: a.level })),
         updates: recentUpdates.map((u) => ({ label: u.label, type: u.latestType, comment: u.weeklyComment.slice(0, 240) })),
       }
@@ -191,22 +194,52 @@ export default function DashboardPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Failed to generate portfolio insights")
 
-      setAiSummary(data.summary || "")
+      const summary = data.summary || ""
+      setAiSummary(summary)
+
+      // Save to cache
+      await savePortfolioAiCache(user.uid, summary, metricsSnapshot)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to generate portfolio insights"
       setAiSummary(`AI insight unavailable: ${message}`)
     } finally {
       setAiLoading(false)
     }
-  }, [activeProjects.length, totalBudget, atRiskCount, overdueGoCount, dueSoonGoCount, scheduleOverdueCount, weeklyStaleCount, alerts, recentUpdates, aiLoading])
+  }, [user, activeProjects.length, totalBudget, atRiskCount, overdueGoCount, dueSoonGoCount, scheduleOverdueCount, weeklyStaleCount, alerts, recentUpdates, aiLoading])
 
-  // Auto-generate AI brief once data is loaded
+  // Check cache and auto-generate AI brief once data is loaded
   useEffect(() => {
-    if (!dataLoading && activeProjects.length > 0 && !aiFetchedRef.current) {
-      aiFetchedRef.current = true
-      generatePortfolioAI()
+    if (!dataLoading && activeProjects.length > 0 && !cacheCheckedRef.current && user) {
+      cacheCheckedRef.current = true
+
+      ;(async () => {
+        try {
+          const cache = await getPortfolioAiCache(user.uid)
+
+          if (cache) {
+            const lastGenerated = new Date(cache.lastGeneratedAt).getTime()
+            const now = Date.now()
+            const hoursSinceLastGen = (now - lastGenerated) / (1000 * 60 * 60)
+
+            // Only auto-refresh if more than 24 hours have passed
+            if (hoursSinceLastGen < 24) {
+              setAiSummary(cache.summary)
+              return
+            }
+          }
+
+          // No cache or cache is stale (>24h) - generate fresh insights
+          aiFetchedRef.current = true
+          generatePortfolioAI()
+        } catch (err) {
+          console.error("Error checking AI cache:", err)
+          // On error, generate fresh
+          aiFetchedRef.current = true
+          generatePortfolioAI()
+        }
+      })()
     }
-  }, [dataLoading, activeProjects.length, generatePortfolioAI])
+  }, [dataLoading, activeProjects.length, user, generatePortfolioAI])
 
   // Derived schedule health metrics
   const healthyScheduleCount = activeProjects.filter((p) => p.healthStatus === "green").length
@@ -307,7 +340,7 @@ export default function DashboardPage() {
             </CardTitle>
             {aiSummary && !aiLoading && (
               <button
-                onClick={() => { aiFetchedRef.current = false; generatePortfolioAI() }}
+                onClick={() => { aiFetchedRef.current = false; cacheCheckedRef.current = false; generatePortfolioAI(true) }}
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 title="Refresh AI brief"
               >
