@@ -19,7 +19,8 @@
       "Bash(node -e \"const c = require\\('cheerio'\\); const doc = c.load\\('<p>hi</p>'\\); const el = doc\\('p'\\)[0]; console.log\\(typeof el, el?.constructor?.name\\)\")",
       "Bash(npx eslint:*)",
       "Bash(firebase deploy *)",
-      "Bash(npx firebase-tools *)"
+      "Bash(npx firebase-tools *)",
+      "Read(//c/c/Users/ewaisg/StudioProjects/facilione/**)"
     ]
   },
   "hooks": {
