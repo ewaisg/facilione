@@ -37,6 +37,13 @@ service cloud.firestore {
       return isCM() && projectData.pmUserId in getUserDoc().managedUserIds;
     }
 
+    function canAccessLinkedProject(projectId) {
+      let proj = get(/databases/$(database)/documents/projects/$(projectId)).data;
+      return isAdmin()
+             || isAssignedPM(proj)
+             || isManagingCM(proj);
+    }
+
     // ─── User Documents ─────────────────────────────────────────
 
     match /users/{userId} {
@@ -292,12 +299,4 @@ service cloud.firestore {
       }
     }
   }
-}
-
-// Helper function to check if user can access linked project
-function canAccessLinkedProject(projectId) {
-  let proj = get(/databases/$(database)/documents/projects/$(projectId)).data;
-  return isAdmin()
-         || isAssignedPM(proj)
-         || isManagingCM(proj);
 }
