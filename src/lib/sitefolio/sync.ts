@@ -6,11 +6,18 @@ import { parseSchedule } from "@/lib/sitefolio/parsers"
 import type { SiteFolioSyncMeta } from "@/types/sitefolio"
 
 // ---------------------------------------------------------------------------
-// SiteFolio URL constants
+// SiteFolio URL helpers
 // ---------------------------------------------------------------------------
 
-const SF_PROJECTS_LIST =
-  "/Kroger/ViewContactProjects.sf?idContact=83709&idBusiness=8252"
+/**
+ * Build the SiteFolio projects-list URL for a given contact/business pair.
+ */
+export function buildProjectsListUrl(
+  contactId: number,
+  businessId: number,
+): string {
+  return `/Kroger/ViewContactProjects.sf?idContact=${contactId}&idBusiness=${businessId}`
+}
 
 const SF_OVERVIEW = (id: number) =>
   `/Kroger/ProjectOverviewView.sf?idProject=${id}&idfilter=0`
@@ -33,8 +40,28 @@ export interface SyncResult {
 // syncAllProjects — full sweep
 // ---------------------------------------------------------------------------
 
-export async function syncAllProjects(): Promise<SyncResult> {
-  const html = await sfPageFetch(SF_PROJECTS_LIST)
+export async function syncAllProjects(
+  contactId?: number,
+  businessId?: number,
+): Promise<SyncResult> {
+  // Resolve contact/business IDs — use provided values or fall back to session
+  let cid = contactId
+  let bid = businessId
+  if (!cid || !bid) {
+    const { getStoredSession } = await import("@/lib/sitefolio/session-store")
+    const session = await getStoredSession()
+    if (session) {
+      cid = cid || session.memberId
+      bid = bid || session.enterpriseId
+    }
+  }
+  if (!cid || !bid) {
+    throw new Error(
+      "No contactId/businessId provided and no active SiteFolio session",
+    )
+  }
+
+  const html = await sfPageFetch(buildProjectsListUrl(cid, bid))
   const sfProjects = parseProjectsList(html)
 
   const result: SyncResult = {

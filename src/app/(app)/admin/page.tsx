@@ -17,7 +17,7 @@ import {
 import {
   ShieldCheck, UserPlus, Loader2, Copy, Check, AlertTriangle,
   Users, FolderKanban, Trash2, Pencil, RefreshCw,
-  CheckCircle2, XCircle, Bot, Globe,
+  CheckCircle2, XCircle, Bot, Globe, Download, Search,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -1706,6 +1706,30 @@ interface SiteFolioSyncResult {
   errors: { projectNumber: string; error: string }[]
 }
 
+interface SiteFolioImportPreviewProject {
+  sfProjectId: number
+  projectNumber: string
+  year: string
+  description: string
+  phase: string
+  projectType: string
+  role: string
+  storeNumber: string
+  storeName: string
+  storeLocation: string
+  overviewUrl: string
+  existsInApp: boolean
+  facilOneProjectId: string | null
+}
+
+interface SiteFolioImportResult {
+  found: number
+  created: number
+  synced: number
+  skipped: number
+  errors: { projectNumber: string; error: string }[]
+}
+
 function SiteFolioTab() {
   const [sessionStatus, setSessionStatus] = useState<SiteFolioSessionStatus | null>(null)
   const [sessionLoading, setSessionLoading] = useState(true)
@@ -1715,6 +1739,16 @@ function SiteFolioTab() {
   const [syncResult, setSyncResult] = useState<SiteFolioSyncResult | null>(null)
   const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null)
 
+  // Import state
+  const [importContactId, setImportContactId] = useState("")
+  const [importBusinessId, setImportBusinessId] = useState("")
+  const [previewing, setPreviewing] = useState(false)
+  const [previewProjects, setPreviewProjects] = useState<SiteFolioImportPreviewProject[] | null>(null)
+  const [previewAlreadyLinked, setPreviewAlreadyLinked] = useState(0)
+  const [selectedSfIds, setSelectedSfIds] = useState<Set<number>>(new Set())
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<SiteFolioImportResult | null>(null)
+
   const loadSessionStatus = useCallback(async () => {
     setSessionLoading(true)
     try {
@@ -1722,6 +1756,9 @@ function SiteFolioTab() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Failed to load session status")
       setSessionStatus(data)
+      // Pre-fill contact/business IDs from session
+      if (data.memberId && !importContactId) setImportContactId(String(data.memberId))
+      if (data.enterpriseId && !importBusinessId) setImportBusinessId(String(data.enterpriseId))
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load session status"
       toast.error(message)
@@ -1729,6 +1766,7 @@ function SiteFolioTab() {
     } finally {
       setSessionLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadSyncStatus = useCallback(async () => {
@@ -1750,6 +1788,89 @@ function SiteFolioTab() {
   useEffect(() => { loadSessionStatus() }, [loadSessionStatus])
   useEffect(() => { loadSyncStatus() }, [loadSyncStatus])
 
+  // ── Import handlers ──
+
+  const handlePreview = async () => {
+    setPreviewing(true)
+    setPreviewProjects(null)
+    setImportResult(null)
+    try {
+      const params = new URLSearchParams()
+      if (importContactId) params.set("contactId", importContactId)
+      if (importBusinessId) params.set("businessId", importBusinessId)
+      const res = await fetch(`/api/sitefolio/import/preview?${params.toString()}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Preview failed")
+      setPreviewProjects(data.projects)
+      setPreviewAlreadyLinked(data.alreadyLinked)
+      // Select all new projects by default
+      const newIds = new Set<number>(
+        (data.projects as SiteFolioImportPreviewProject[])
+          .filter((p: SiteFolioImportPreviewProject) => !p.existsInApp)
+          .map((p: SiteFolioImportPreviewProject) => p.sfProjectId),
+      )
+      setSelectedSfIds(newIds)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Preview failed"
+      toast.error(message)
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  const toggleSfId = (id: number) => {
+    setSelectedSfIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAll = (checked: boolean) => {
+    if (!previewProjects) return
+    if (checked) {
+      setSelectedSfIds(new Set(previewProjects.map((p) => p.sfProjectId)))
+    } else {
+      setSelectedSfIds(new Set())
+    }
+  }
+
+  const handleImport = async () => {
+    if (selectedSfIds.size === 0) {
+      toast.error("No projects selected for import")
+      return
+    }
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const res = await fetch("/api/sitefolio/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: importContactId ? Number(importContactId) : undefined,
+          businessId: importBusinessId ? Number(importBusinessId) : undefined,
+          selectedSfProjectIds: Array.from(selectedSfIds),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Import failed")
+      setImportResult(data)
+      toast.success(
+        `Import complete: ${data.created} created, ${data.synced} synced`,
+      )
+      // Refresh sync status to show new projects
+      loadSyncStatus()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Import failed"
+      toast.error(message)
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  // ── Sync handlers ──
+
   const handleSyncAll = async () => {
     setSyncing(true)
     setSyncResult(null)
@@ -1757,12 +1878,16 @@ function SiteFolioTab() {
       const res = await fetch("/api/sitefolio/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          contactId: importContactId ? Number(importContactId) : undefined,
+          businessId: importBusinessId ? Number(importBusinessId) : undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Sync failed")
-      setSyncResult(data)
-      toast.success(`Sync complete: ${data.synced} synced, ${data.skipped} skipped`)
+      const r = data.result || data
+      setSyncResult(r)
+      toast.success(`Sync complete: ${r.synced} synced, ${r.skipped} skipped`)
       loadSyncStatus()
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sync failed"
@@ -1791,6 +1916,10 @@ function SiteFolioTab() {
       setSyncingProjectId(null)
     }
   }
+
+  const newProjectCount = previewProjects
+    ? previewProjects.filter((p) => !p.existsInApp).length
+    : 0
 
   return (
     <div className="space-y-4 mt-4">
@@ -1859,6 +1988,174 @@ function SiteFolioTab() {
         </CardContent>
       </Card>
 
+      {/* ── Import Projects from SiteFolio ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Download className="size-4" /> Import Projects from SiteFolio
+          </CardTitle>
+          <CardDescription>
+            Fetch projects from SiteFolio and create them in FaciliOne. New projects will be created; existing ones will be synced.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Contact / Business ID inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label htmlFor="sf-contact-id" className="text-xs">Contact ID</Label>
+              <Input
+                id="sf-contact-id"
+                type="number"
+                placeholder="e.g. 83709"
+                value={importContactId}
+                onChange={(e) => setImportContactId(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sf-business-id" className="text-xs">Business ID</Label>
+              <Input
+                id="sf-business-id"
+                type="number"
+                placeholder="e.g. 8252"
+                value={importBusinessId}
+                onChange={(e) => setImportBusinessId(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handlePreview}
+              disabled={previewing || sessionLoading || !sessionStatus?.active}
+            >
+              {previewing ? (
+                <><Loader2 className="size-4 animate-spin" /> Loading...</>
+              ) : (
+                <><Search className="size-4" /> Preview Import</>
+              )}
+            </Button>
+          </div>
+
+          {/* Preview table */}
+          {previewProjects && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Found <strong>{previewProjects.length}</strong> project{previewProjects.length !== 1 ? "s" : ""} &mdash;{" "}
+                  <strong className="text-emerald-700">{newProjectCount}</strong> new,{" "}
+                  <strong className="text-muted-foreground">{previewAlreadyLinked}</strong> already linked
+                </p>
+                <span className="text-xs text-muted-foreground">
+                  {selectedSfIds.size} selected
+                </span>
+              </div>
+
+              <div className="rounded-lg border overflow-hidden">
+                {/* Table header */}
+                <div className="grid grid-cols-[36px_70px_80px_1fr_120px_80px] gap-2 px-4 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
+                  <span>
+                    <input
+                      type="checkbox"
+                      className="size-3.5 rounded border-input accent-primary"
+                      checked={previewProjects.length > 0 && selectedSfIds.size === previewProjects.length}
+                      onChange={(e) => toggleAll(e.target.checked)}
+                    />
+                  </span>
+                  <span>SF ID</span>
+                  <span>Store #</span>
+                  <span>Store Name</span>
+                  <span>Project Type</span>
+                  <span>Status</span>
+                </div>
+                {/* Table rows */}
+                <div className="divide-y max-h-[400px] overflow-y-auto">
+                  {previewProjects.map((p) => (
+                    <label
+                      key={p.sfProjectId}
+                      className={cn(
+                        "grid grid-cols-[36px_70px_80px_1fr_120px_80px] gap-2 px-4 py-2.5 items-center cursor-pointer transition-colors",
+                        selectedSfIds.has(p.sfProjectId)
+                          ? "bg-primary/5 hover:bg-primary/10"
+                          : "hover:bg-muted/30",
+                      )}
+                    >
+                      <span>
+                        <input
+                          type="checkbox"
+                          className="size-3.5 rounded border-input accent-primary"
+                          checked={selectedSfIds.has(p.sfProjectId)}
+                          onChange={() => toggleSfId(p.sfProjectId)}
+                        />
+                      </span>
+                      <span className="text-sm font-mono">{p.sfProjectId}</span>
+                      <span className="text-sm">{p.storeNumber}</span>
+                      <span className="text-sm truncate" title={p.storeName}>
+                        {p.storeName}
+                        {p.description ? (
+                          <span className="text-muted-foreground"> - {p.description}</span>
+                        ) : null}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate" title={p.projectType}>
+                        {p.projectType}
+                      </span>
+                      <span>
+                        {p.existsInApp ? (
+                          <Badge variant="outline" className="gap-1 text-[10px] border-sky-200 bg-sky-50 text-sky-700">
+                            Linked
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1 text-[10px] border-emerald-200 bg-emerald-50 text-emerald-700">
+                            New
+                          </Badge>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Import button */}
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleImport}
+                  disabled={importing || selectedSfIds.size === 0}
+                >
+                  {importing ? (
+                    <><Loader2 className="size-4 animate-spin" /> Importing...</>
+                  ) : (
+                    <><Download className="size-4" /> Import {selectedSfIds.size} Selected</>
+                  )}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  New projects will be created and all selected will be synced.
+                </span>
+              </div>
+
+              {/* Import result */}
+              {importResult && (
+                <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+                  <p className="text-sm font-medium">Import Results</p>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <span>Found: <strong>{importResult.found}</strong></span>
+                    <span>Created: <strong className="text-emerald-700">{importResult.created}</strong></span>
+                    <span>Synced: <strong className="text-sky-700">{importResult.synced}</strong></span>
+                    <span>Skipped: <strong className="text-muted-foreground">{importResult.skipped}</strong></span>
+                    <span>Errors: <strong className={(importResult.errors?.length ?? 0) > 0 ? "text-red-700" : "text-muted-foreground"}>{importResult.errors?.length ?? 0}</strong></span>
+                  </div>
+                  {(importResult.errors?.length ?? 0) > 0 && (
+                    <div className="space-y-1 mt-2">
+                      {importResult.errors.map((err, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-red-700 bg-red-50 rounded-md p-2">
+                          <XCircle className="size-3.5 shrink-0 mt-0.5" />
+                          <span><strong>{err.projectNumber}:</strong> {err.error}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* ── Sync Controls ── */}
       <Card>
         <CardHeader>
@@ -1866,7 +2163,7 @@ function SiteFolioTab() {
             <RefreshCw className="size-4" /> Data Sync
           </CardTitle>
           <CardDescription>
-            Trigger a full sync or view the last sync result.
+            Trigger a full sync or view the last sync result. Uses the Contact / Business IDs above.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

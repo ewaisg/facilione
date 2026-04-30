@@ -51,8 +51,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
     }
 
-    // Full sync — all projects
-    const result = await syncAllProjects()
+    // Full sync — all projects (with optional dynamic contact/business IDs)
+    const contactId =
+      typeof body.contactId === "number" ? body.contactId : undefined
+    const businessId =
+      typeof body.businessId === "number" ? body.businessId : undefined
+    const result = await syncAllProjects(contactId, businessId)
     return NextResponse.json({ ok: true, result })
   } catch (err) {
     const message =
