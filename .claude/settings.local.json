@@ -23,7 +23,10 @@
       "Read(//c/c/Users/ewaisg/StudioProjects/facilione/**)",
       "Bash(npx firebase *)",
       "Bash(firebase --version)",
-      "Bash(firebase projects:list)"
+      "Bash(firebase projects:list)",
+      "Bash('table.WP_DATATABLE tr')",
+      "Bash(node -e ' *)",
+      "Bash(node *)"
     ]
   },
   "hooks": {

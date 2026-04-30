@@ -1,27 +1,19 @@
 import * as cheerio from "cheerio"
-import type { Element } from "domhandler"
 import type { SiteFolioProject } from "@/types/sitefolio"
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function cleanText(value: string): string {
-  return (value || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()
+  return (value || "").replace(/ /g, " ").replace(/\s+/g, " ").trim()
 }
-
-// ---------------------------------------------------------------------------
-// Parser: ViewContactProjects.sf → SiteFolioProject[]
-// ---------------------------------------------------------------------------
 
 /**
  * Parses the "Current Projects" listing from SiteFolio's
  * ViewContactProjects.sf page and returns a flat array of
  * `SiteFolioProject` records.
  *
- * Store header rows (colspan 3, bold/underline) provide shared
- * storeNumber / storeName / storeLocation for the project rows that
- * follow until the next store header.
+ * Store header rows have a single <td colspan="3"> with bold/underline
+ * styling (via inline style or tags) containing the store identifier.
+ * Project detail rows follow, each containing an <a> link to
+ * ProjectOverviewView.sf.
  */
 export function parseProjectsList(html: string): SiteFolioProject[] {
   if (!html) return []
@@ -29,27 +21,33 @@ export function parseProjectsList(html: string): SiteFolioProject[] {
   const $ = cheerio.load(html)
   const projects: SiteFolioProject[] = []
 
-  // 1. Find the "Current Projects" WebPart container.
-  //    Walk every div.TITLE looking for one whose text includes
-  //    "Current Projects", then grab its sibling WP_BODYCONTAINER.
-  let bodyContainer: cheerio.Cheerio<Element> | null = null
+  // Find the WP_DATATABLE that contains the current projects.
+  // Strategy: look for a table with class WP_DATATABLE that has project links.
+  // Fallback: look for the "Current Projects" title and find the table in the
+  // same webpart body container.
+  let table = $('table.WP_DATATABLE').filter((_i, el) => {
+    return $(el).find('a[href*="ProjectOverviewView"]').length > 0
+  }).first()
 
-  $("div.TITLE").each((_i, el) => {
-    const text = cleanText($(el).text())
-    if (text.includes("Current Projects")) {
-      // The body container is a sibling of the TITLE div
-      bodyContainer = $(el).siblings("div.WP_BODYCONTAINER").first()
-      return false // break
-    }
-  })
+  if (!table.length) {
+    // Fallback: find "Current Projects" text and walk up to the container
+    $("div.TITLE").each((_i, el) => {
+      const text = cleanText($(el).text())
+      if (text.includes("Current Projects")) {
+        const webpart = $(el).closest(".WEBPART, [id^='divWebPartRoot']")
+        if (webpart.length) {
+          table = webpart.find("table.WP_DATATABLE").first()
+        }
+        if (!table.length) {
+          table = $(el).closest(".WEBPART_TITLE").next(".WP_BODYCONTAINER").find("table.WP_DATATABLE").first()
+        }
+        return false
+      }
+    })
+  }
 
-  if (!bodyContainer) return projects
-
-  // 2. Inside that container, find the data table.
-  const table = $(bodyContainer).find("table.WP_DATATABLE").first()
   if (!table.length) return projects
 
-  // 3. Walk rows: detect store headers vs project detail rows.
   let currentStoreNumber = ""
   let currentStoreName = ""
   let currentStoreLocation = ""
@@ -58,36 +56,60 @@ export function parseProjectsList(html: string): SiteFolioProject[] {
     const $tr = $(tr)
 
     // --- Store header detection ---
-    // A store header row has a <td colspan="3"> with bold/underline text.
+    // A store header row has a <td colspan="3"> with bold styling.
+    // The styling may come from inline style (font-weight:bold) or <b>/<strong>/<u> tags.
     const colspanTd = $tr.find('td[colspan="3"]')
     if (colspanTd.length) {
-      const hasBold = colspanTd.find("b, strong").length > 0 || colspanTd.find("u").length > 0
-      if (hasBold) {
+      const style = (colspanTd.attr("style") || "").toLowerCase()
+      const hasBoldStyle = style.includes("font-weight") && style.includes("bold")
+      const hasBoldTag = colspanTd.find("b, strong, u").length > 0
+      if (hasBoldStyle || hasBoldTag) {
         const headerText = cleanText(colspanTd.text())
-        // Pattern: "620-00164 — KS-164, Windsor, CO - Windsor East"
-        //   storeNumber = 620-00164
-        //   rest after " — " = "KS-164, Windsor, CO - Windsor East"
-        //   storeName = KS-164
-        //   storeLocation = Windsor, CO - Windsor East
-        const dashMatch = headerText.match(
-          /^([\w-]+)\s*[—\u2014-]\s*(.+)$/,
-        )
-        if (dashMatch) {
-          currentStoreNumber = dashMatch[1].trim()
-          const rest = dashMatch[2].trim()
-          const firstComma = rest.indexOf(",")
-          if (firstComma !== -1) {
-            currentStoreName = rest.slice(0, firstComma).trim()
-            currentStoreLocation = rest.slice(firstComma + 1).trim()
+
+        // Parse store header. Known formats:
+        //   "620-00012 KS-012 Pueblo, CO - Sunset Plaza Kroger"
+        //   "620-00012 KS-012, Pueblo, CO - Sunset Plaza Kroger"
+        //   "620-00164 Windsor, CO - Windsor East Kroger"
+        //   "620-00096 KS-096 Greenwood Village Kroger"
+        //
+        // Pattern: storeNumber [storeName][, location]
+        // The storeNumber is always the first token (digits-digits format).
+
+        // Extract leading oracle-style number (e.g. "620-00012")
+        const leadMatch = headerText.match(/^([\d]+-[\d]+)\s+(.*)$/)
+        if (leadMatch) {
+          currentStoreNumber = leadMatch[1].trim()
+          const rest = leadMatch[2].trim()
+
+          // Try to extract "KS-NNN" store name from the rest
+          const ksMatch = rest.match(/^(KS-\d+)[,\s]+(.*)$/i)
+          if (ksMatch) {
+            currentStoreName = ksMatch[1].trim()
+            currentStoreLocation = ksMatch[2].trim()
           } else {
-            currentStoreName = rest
-            currentStoreLocation = ""
+            // No KS-NNN prefix — treat everything as location
+            currentStoreName = currentStoreNumber
+            currentStoreLocation = rest
           }
         } else {
-          // Fallback: use the entire header as storeName
-          currentStoreNumber = ""
-          currentStoreName = headerText
-          currentStoreLocation = ""
+          // Fallback: try em-dash or dash pattern
+          const dashMatch = headerText.match(/^([\w-]+)\s*[——-]\s*(.+)$/)
+          if (dashMatch) {
+            currentStoreNumber = dashMatch[1].trim()
+            const rest = dashMatch[2].trim()
+            const firstComma = rest.indexOf(",")
+            if (firstComma !== -1) {
+              currentStoreName = rest.slice(0, firstComma).trim()
+              currentStoreLocation = rest.slice(firstComma + 1).trim()
+            } else {
+              currentStoreName = rest
+              currentStoreLocation = ""
+            }
+          } else {
+            currentStoreNumber = ""
+            currentStoreName = headerText
+            currentStoreLocation = ""
+          }
         }
         return // continue to next row
       }
@@ -95,7 +117,7 @@ export function parseProjectsList(html: string): SiteFolioProject[] {
 
     // --- Project detail detection ---
     const link = $tr.find('a[href*="ProjectOverviewView"]').first()
-    if (!link.length) return // not a project row
+    if (!link.length) return
 
     const href = link.attr("href") || ""
     const linkText = cleanText(link.text())
@@ -108,21 +130,18 @@ export function parseProjectsList(html: string): SiteFolioProject[] {
     }
 
     // Parse link text:
-    // "{projectNumber} {year} {description}, {phase}, {projectType}"
-    // e.g. "620-00164-01 2028 New Store, Bidding, New Store-Net New"
+    // "620-00012-03 2026 WIW, Construction Planning, Within-the-Walls Remodel"
     let projectNumber = ""
     let year = ""
     let description = ""
     let phase = ""
     let projectType = ""
 
-    // First token is projectNumber, second is year, rest is the comma-separated tail
     const tokens = linkText.match(/^([\w-]+)\s+(\d{4})\s+(.*)$/)
     if (tokens) {
       projectNumber = tokens[1]
       year = tokens[2]
       const tail = tokens[3]
-      // Split the tail by commas
       const parts = tail.split(",").map((s) => s.trim())
       if (parts.length >= 3) {
         description = parts.slice(0, parts.length - 2).join(", ")
@@ -135,12 +154,10 @@ export function parseProjectsList(html: string): SiteFolioProject[] {
         description = tail
       }
     } else {
-      // Fallback: can't parse structured parts
       description = linkText
     }
 
     // Extract role from text after the </a> tag.
-    // The parent TD may contain: <a>...</a> Role: FE Project Manager
     const parentTd = link.parent()
     const fullTdText = cleanText(parentTd.text())
     let role = ""
