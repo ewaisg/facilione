@@ -22,7 +22,7 @@ export function NextStepsList({
 }: NextStepsListProps) {
   return (
     <div className="mt-6">
-      <h3 className="text-xs font-bold text-navy uppercase tracking-wide mb-3">
+      <h3 className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">
         Upcoming Next Steps
       </h3>
 
@@ -30,7 +30,7 @@ export function NextStepsList({
         {steps.map((step, idx) => (
           <div key={step.id} className="flex gap-2 items-start">
             {/* Step Number */}
-            <div className="w-6 h-6 bg-navy text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1">
+            <div className="w-6 h-6 bg-brand-900 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1">
               {idx + 1}
             </div>
 
@@ -65,7 +65,7 @@ export function NextStepsList({
       <button
         type="button"
         onClick={onAddStep}
-        className="mt-3 border border-dashed border-gray-300 rounded px-4 py-2 text-xs text-gray-400 hover:text-navy hover:border-navy transition-colors"
+        className="mt-3 border border-dashed border-gray-300 rounded px-4 py-2 text-xs text-gray-400 hover:text-foreground hover:border-foreground transition-colors"
       >
         + Add next step
       </button>

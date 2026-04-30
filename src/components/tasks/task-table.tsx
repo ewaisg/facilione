@@ -5,7 +5,7 @@
 "use client"
 
 import { useState } from "react"
-import { TaskStatusBadge, getNextStatus } from "./task-status-badge"
+import { TaskStatusBadge } from "./task-status-badge"
 import { X } from "lucide-react"
 import type { Task } from "@/types"
 
@@ -32,7 +32,7 @@ export function TaskTable({
   return (
     <table className="w-full border-collapse">
       <thead>
-        <tr className="bg-navy">
+        <tr className="bg-brand-900">
           <th className="w-10 text-center py-2 px-3 border border-border text-white text-xs font-bold"></th>
           <th className="text-left py-2 px-3 border border-border text-white text-xs font-bold">TASK</th>
           <th className="w-32 text-center py-2 px-3 border border-border text-white text-xs font-bold">STATUS</th>

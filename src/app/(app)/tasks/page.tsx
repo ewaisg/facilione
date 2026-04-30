@@ -32,7 +32,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Plus, Settings } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { getNextStatus } from "@/components/tasks/task-status-badge"
 import type { TaskProject, TaskSection as TaskSectionType, Task, NextStep } from "@/types"
@@ -54,14 +54,14 @@ export default function TasksPage() {
 
   // Form state
   const [projectForm, setProjectForm] = useState<{
-    id: string
+    code: string
     name: string
     priority: string
     priorityLevel: "highest" | "high" | "active" | "lower"
     status: string
     gcInfo: string
   }>({
-    id: "",
+    code: "",
     name: "",
     priority: "ACTIVE",
     priorityLevel: "active",
@@ -150,8 +150,8 @@ export default function TasksPage() {
 
   // Handlers
   const handleCreateProject = async () => {
-    if (!user || !projectForm.id || !projectForm.name) {
-      toast.error("Project ID and Name are required")
+    if (!user || !projectForm.code || !projectForm.name) {
+      toast.error("Project Code and Name are required")
       return
     }
 
@@ -166,7 +166,7 @@ export default function TasksPage() {
       )
       toast.success("Project created")
       setShowNewProjectModal(false)
-      setProjectForm({ id: "", name: "", priority: "ACTIVE", priorityLevel: "active", status: "", gcInfo: "" })
+      setProjectForm({ code: "", name: "", priority: "ACTIVE", priorityLevel: "active", status: "", gcInfo: "" })
     } catch (err) {
       console.error(err)
       toast.error("Failed to create project")
@@ -174,8 +174,8 @@ export default function TasksPage() {
   }
 
   const handleUpdateProject = async () => {
-    if (!editingProject || !projectForm.id || !projectForm.name) {
-      toast.error("Project ID and Name are required")
+    if (!editingProject || !projectForm.code || !projectForm.name) {
+      toast.error("Project Code and Name are required")
       return
     }
 
@@ -194,7 +194,7 @@ export default function TasksPage() {
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
 
-    if (!confirm(`Delete "${project.id} — ${project.name}"?\n\nThis will delete all sections, tasks, and next steps. This cannot be undone.`)) {
+    if (!confirm(`Delete "${project.code} — ${project.name}"?\n\nThis will delete all sections, tasks, and next steps. This cannot be undone.`)) {
       return
     }
 
@@ -382,9 +382,9 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {/* Sidebar */}
-      <div className="w-60 bg-navy flex-shrink-0">
+      <div className="w-60 bg-brand-900 flex-shrink-0">
         <TaskProjectSidebar
           projects={projects}
           activeProjectId={activeProjectId}
@@ -394,7 +394,7 @@ export default function TasksPage() {
             if (proj) {
               setEditingProject(proj)
               setProjectForm({
-                id: proj.id,
+                code: proj.code,
                 name: proj.name,
                 priority: proj.priority,
                 priorityLevel: proj.priorityLevel,
@@ -425,8 +425,8 @@ export default function TasksPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
         <div className="bg-white border-b border-border px-5 py-3 flex items-center gap-3 flex-shrink-0">
-          <h2 className="text-sm font-bold text-navy flex-1">
-            {activeProject ? `${activeProject.id} — ${activeProject.name}` : "Select a project"}
+          <h2 className="text-sm font-bold text-foreground flex-1">
+            {activeProject ? `${activeProject.code} — ${activeProject.name}` : "Select a project"}
           </h2>
           {activeProject && (
             <>
@@ -453,13 +453,13 @@ export default function TasksPage() {
           ) : (
             <>
               {/* Project Header */}
-              <div className="bg-navy text-white p-4 rounded-t-md">
-                <div className="text-lg font-bold">{activeProject.id}</div>
+              <div className="bg-brand-900 text-white p-4 rounded-t-md">
+                <div className="text-lg font-bold">{activeProject.code}</div>
                 <div className="text-sm text-blue-200">{activeProject.name}</div>
               </div>
 
               <div className="bg-blue-100 border border-border border-t-0 px-4 py-2 text-xs flex gap-3">
-                <span className="font-bold text-navy">{activeProject.priority}</span>
+                <span className="font-bold text-foreground">{activeProject.priority}</span>
                 <span className="text-muted-foreground">|</span>
                 <span>{activeProject.status}</span>
                 {activeProject.gcInfo && (
@@ -508,10 +508,10 @@ export default function TasksPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Project ID</Label>
+              <Label>Project Code</Label>
               <Input
-                value={projectForm.id}
-                onChange={(e) => setProjectForm({ ...projectForm, id: e.target.value.toUpperCase() })}
+                value={projectForm.code}
+                onChange={(e) => setProjectForm({ ...projectForm, code: e.target.value.toUpperCase() })}
                 placeholder="KS-XX"
               />
             </div>
@@ -576,10 +576,10 @@ export default function TasksPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Project ID</Label>
+              <Label>Project Code</Label>
               <Input
-                value={projectForm.id}
-                onChange={(e) => setProjectForm({ ...projectForm, id: e.target.value.toUpperCase() })}
+                value={projectForm.code}
+                onChange={(e) => setProjectForm({ ...projectForm, code: e.target.value.toUpperCase() })}
               />
             </div>
             <div>

@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(cached)
           setLoading(false)
 
-          // Refresh profile in background (non-blocking) if not already fetched this session
+          // Always refresh from Firestore to pick up role/profile changes
           if (profileFetchedRef.current !== fbUser.uid) {
             profileFetchedRef.current = fbUser.uid
             fetchAndCacheProfile(fbUser).then((freshUser) => {

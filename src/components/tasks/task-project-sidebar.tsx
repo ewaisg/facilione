@@ -59,7 +59,7 @@ export function TaskProjectSidebar({
                 className="w-full text-left px-4 py-3 flex-1"
               >
                 <div className="text-sm font-bold text-white/90">
-                  {project.id}
+                  {project.code}
                 </div>
                 <div className="text-xs text-white/50 mt-0.5 line-clamp-1">
                   {project.name}

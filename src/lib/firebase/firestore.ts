@@ -363,6 +363,7 @@ export async function createTaskProject(
         projectId: projectRef.id,
         sortOrder: idx,
         createdAt: now,
+        updatedAt: now,
       })
     })
   }
@@ -741,6 +742,7 @@ export async function createNextStep(
     projectId,
     sortOrder,
     createdAt: now,
+    updatedAt: now,
   })
 
   await updateDoc(doc(db, "taskProjects", projectId), {
@@ -762,6 +764,7 @@ export async function updateNextStep(
 
   await updateDoc(doc(db, "taskProjects", projectId, "nextSteps", stepId), {
     text,
+    updatedAt: now,
   })
 
   await updateDoc(doc(db, "taskProjects", projectId), {

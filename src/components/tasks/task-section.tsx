@@ -4,7 +4,6 @@
 
 "use client"
 
-import { useState } from "react"
 import { TaskTable } from "./task-table"
 import type { TaskSection as TaskSectionType, Task } from "@/types"
 
@@ -41,7 +40,7 @@ export function TaskSection({
     <div className="mb-1">
       {/* Section Header */}
       <div className="bg-slate-100 border border-border border-t-0 px-4 py-2 flex items-center justify-between">
-        <span className="text-xs font-bold text-navy uppercase tracking-wide">
+        <span className="text-xs font-bold text-foreground uppercase tracking-wide">
           {isNotes && "📝 "}
           {section.label}
         </span>
@@ -52,7 +51,7 @@ export function TaskSection({
               const newLabel = prompt("New section name:", section.label)
               if (newLabel) onRenameSection(section.id, newLabel)
             }}
-            className="text-xs text-navy opacity-50 hover:opacity-100 transition-opacity"
+            className="text-xs text-foreground opacity-50 hover:opacity-100 transition-opacity"
           >
             rename
           </button>
@@ -63,7 +62,7 @@ export function TaskSection({
                 onDeleteSection(section.id)
               }
             }}
-            className="text-xs text-navy opacity-50 hover:opacity-100 transition-opacity"
+            className="text-xs text-foreground opacity-50 hover:opacity-100 transition-opacity"
           >
             remove
           </button>
@@ -97,7 +96,7 @@ export function TaskSection({
             <button
               type="button"
               onClick={() => onAddTask && onAddTask(section.id)}
-              className="w-full text-left text-xs text-gray-400 hover:text-navy py-2 px-4 transition-colors"
+              className="w-full text-left text-xs text-gray-400 hover:text-foreground py-2 px-4 transition-colors"
             >
               + Add task
             </button>

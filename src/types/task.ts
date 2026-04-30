@@ -17,8 +17,9 @@ export type TaskSectionType = "tasks" | "notes"
  */
 export interface TaskProject {
   id: string
-  linkedProjectId?: string         // If tied to real project
-  name: string                      // "KS-12 — Remodel" or "Daily Tasks"
+  code: string                      // User-entered project code, e.g. "KS-12"
+  linkedProjectId?: string
+  name: string                      // "Remodel" or "Daily Tasks"
   priority: string                  // Display text: "HIGHEST PRIORITY", "ACTIVE", etc.
   priorityLevel: TaskPriorityLevel  // For color coding
   status: string                    // Freeform status text
