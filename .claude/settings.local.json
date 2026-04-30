@@ -20,7 +20,10 @@
       "Bash(npx eslint:*)",
       "Bash(firebase deploy *)",
       "Bash(npx firebase-tools *)",
-      "Read(//c/c/Users/ewaisg/StudioProjects/facilione/**)"
+      "Read(//c/c/Users/ewaisg/StudioProjects/facilione/**)",
+      "Bash(npx firebase *)",
+      "Bash(firebase --version)",
+      "Bash(firebase projects:list)"
     ]
   },
   "hooks": {
