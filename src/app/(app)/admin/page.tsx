@@ -527,6 +527,11 @@ function ProjectsTab() {
   const [deleteProject, setDeleteProject] = useState<ProjectRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Bulk selection
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+
   // Edit dialog
   const [editProject, setEditProject] = useState<ProjectRecord | null>(null)
   const [editFields, setEditFields] = useState<Record<string, string>>({})
@@ -614,11 +619,53 @@ function ProjectsTab() {
       if (!res.ok) { toast.error("Failed to delete project"); return }
       toast.success(`Deleted: ${deleteProject.storeNumber}`)
       setDeleteProject(null)
+      setSelected((prev) => { const next = new Set(prev); next.delete(deleteProject.id); return next })
       loadProjects()
     } catch {
       toast.error("Network error")
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selected.size === projects.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(projects.map((p) => p.id)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return
+    setBulkDeleting(true)
+    try {
+      const res = await fetch("/api/admin/projects/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast.error(data.error || "Bulk delete failed"); return }
+      toast.success(`Deleted ${data.deleted} project${data.deleted === 1 ? "" : "s"}`)
+      if (data.errors?.length > 0) {
+        toast.error(`${data.errors.length} project(s) failed to delete`)
+      }
+      setSelected(new Set())
+      setShowBulkDelete(false)
+      loadProjects()
+    } catch {
+      toast.error("Network error")
+    } finally {
+      setBulkDeleting(false)
     }
   }
 
@@ -732,9 +779,16 @@ function ProjectsTab() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base">All Projects ({projects.length})</CardTitle>
-          <Button variant="outline" size="sm" onClick={loadProjects} disabled={loading}>
-            <RefreshCw className={cn("size-3.5", loading && "animate-spin")} /> Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {selected.size > 0 && (
+              <Button variant="destructive" size="sm" onClick={() => setShowBulkDelete(true)}>
+                <Trash2 className="size-3.5" /> Delete {selected.size} selected
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={loadProjects} disabled={loading}>
+              <RefreshCw className={cn("size-3.5", loading && "animate-spin")} /> Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -743,12 +797,33 @@ function ProjectsTab() {
             <p className="text-sm text-muted-foreground text-center py-12">No projects found.</p>
           ) : (
             <div className="divide-y">
+              {/* Select All header */}
+              <div className="flex items-center gap-3 px-6 py-2 bg-muted/30">
+                <input
+                  type="checkbox"
+                  checked={projects.length > 0 && selected.size === projects.length}
+                  onChange={toggleSelectAll}
+                  className="size-4 rounded border-border accent-primary cursor-pointer"
+                />
+                <span className="text-xs text-muted-foreground">
+                  {selected.size > 0 ? `${selected.size} of ${projects.length} selected` : "Select all"}
+                </span>
+              </div>
               {projects.map((p) => (
-                <div key={p.id} className="flex items-center justify-between px-6 py-3 hover:bg-muted/30 transition-colors">
+                <div key={p.id} className={cn(
+                  "flex items-center justify-between px-6 py-3 hover:bg-muted/30 transition-colors",
+                  selected.has(p.id) && "bg-primary/5",
+                )}>
                   <div className="flex items-center gap-3 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(p.id)}
+                      onChange={() => toggleSelect(p.id)}
+                      className="size-4 rounded border-border accent-primary cursor-pointer shrink-0"
+                    />
                     <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-muted">{p.projectType}</span>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{p.storeNumber} — {p.storeName}, {p.storeState}</p>
+                      <p className="text-sm font-medium truncate">{[p.storeNumber, p.storeName, p.storeState].filter(Boolean).join(" — ") || "Untitled Project"}</p>
                       <p className="text-xs text-muted-foreground">
                         {PROJECT_TYPE_LABELS[p.projectType as ProjectType] || p.projectType} | {p.status} |
                         Budget: {p.totalBudget ? `$${p.totalBudget.toLocaleString()}` : "TBD"}
@@ -856,6 +931,31 @@ function ProjectsTab() {
             <Button variant="outline" onClick={() => setDeleteProject(null)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? <Loader2 className="size-4 animate-spin" /> : <><Trash2 className="size-4" /> Delete Project</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <Dialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {selected.size} Project{selected.size === 1 ? "" : "s"}</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{selected.size} project{selected.size === 1 ? "" : "s"}</strong> and all their phases and SiteFolio data. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-48 overflow-y-auto rounded-md border bg-muted/20 p-3 text-xs space-y-1">
+            {projects.filter((p) => selected.has(p.id)).map((p) => (
+              <div key={p.id} className="text-muted-foreground">
+                {[p.storeNumber, p.storeName].filter(Boolean).join(" — ") || p.id}
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkDelete(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+              {bulkDeleting ? <><Loader2 className="size-4 animate-spin" /> Deleting...</> : <><Trash2 className="size-4" /> Delete {selected.size} Project{selected.size === 1 ? "" : "s"}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
