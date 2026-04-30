@@ -78,7 +78,13 @@ export async function syncAllProjects(): Promise<SyncResult> {
     }
 
     try {
-      await syncProject(sfProject.sfProjectId, facilOneProjectId)
+      await syncProject(sfProject.sfProjectId, facilOneProjectId, {
+        storeNumber: sfProject.storeNumber,
+        storeName: sfProject.storeName,
+        storeLocation: sfProject.storeLocation,
+        description: sfProject.description,
+        projectType: sfProject.projectType,
+      })
       result.synced++
     } catch (err) {
       const message =
@@ -97,9 +103,18 @@ export async function syncAllProjects(): Promise<SyncResult> {
 // syncProject — single project sync
 // ---------------------------------------------------------------------------
 
+interface SfListMeta {
+  storeNumber?: string
+  storeName?: string
+  storeLocation?: string
+  description?: string
+  projectType?: string
+}
+
 export async function syncProject(
   sfProjectId: number,
   facilOneProjectId: string,
+  listMeta?: SfListMeta,
 ): Promise<void> {
   const sfRef = adminDb
     .collection("projects")
@@ -170,16 +185,58 @@ export async function syncProject(
 
   await sfRef.doc("sync-meta").set(syncMeta, { merge: true })
 
-  // --- Stamp sfProjectId on the main project doc if not already set ---
+  // --- Update the main project doc with overview data and sfProjectId ---
   const projectDoc = await adminDb
     .collection("projects")
     .doc(facilOneProjectId)
     .get()
 
-  if (projectDoc.exists && !projectDoc.data()?.sfProjectId) {
-    await adminDb
-      .collection("projects")
-      .doc(facilOneProjectId)
-      .update({ sfProjectId })
+  if (projectDoc.exists) {
+    const existing = projectDoc.data() || {}
+    const updates: Record<string, unknown> = {
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (!existing.sfProjectId) {
+      updates.sfProjectId = sfProjectId
+    }
+
+    // Backfill from SiteFolio project list metadata
+    if (listMeta) {
+      if (listMeta.storeNumber && !existing.storeNumber) {
+        updates.storeNumber = listMeta.storeNumber
+      }
+      if (listMeta.storeName && !existing.storeName) {
+        updates.storeName = listMeta.storeName
+      }
+    }
+
+    // Read the overview we just synced to backfill address fields
+    const overviewSnap = await sfRef.doc("overview").get()
+    if (overviewSnap.exists) {
+      const ov = overviewSnap.data() as {
+        address?: string
+        city?: string
+        state?: string
+        zip?: string
+      }
+
+      if (ov.address && !existing.storeAddress) {
+        updates.storeAddress = ov.address
+      }
+      if (ov.city && !existing.storeCity) {
+        updates.storeCity = ov.city
+      }
+      if (ov.state && !existing.storeState) {
+        updates.storeState = ov.state
+      }
+    }
+
+    if (Object.keys(updates).length > 1) {
+      await adminDb
+        .collection("projects")
+        .doc(facilOneProjectId)
+        .update(updates)
+    }
   }
 }

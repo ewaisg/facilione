@@ -409,15 +409,13 @@ export default function TasksPage() {
 
         {/* Footer */}
         <div className="p-3 border-t border-white/10">
-          <Button
+          <button
             onClick={() => setShowNewProjectModal(true)}
-            className="w-full"
-            variant="outline"
-            size="sm"
+            className="w-full flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20 transition-colors"
           >
-            <Plus className="size-4 mr-2" />
+            <Plus className="size-4" />
             New Project
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -447,8 +445,24 @@ export default function TasksPage() {
               <Loader2 className="size-6 animate-spin text-muted-foreground" />
             </div>
           ) : !activeProject ? (
-            <div className="text-center py-20 text-muted-foreground">
-              <p>Select a project from the sidebar or create a new one</p>
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-4">
+              <div className="size-14 rounded-2xl bg-muted flex items-center justify-center">
+                <Plus className="size-7 opacity-40" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-sm">
+                  {projects.length === 0 ? "No task projects yet" : "Select a project from the sidebar"}
+                </p>
+                <p className="text-xs mt-1">
+                  {projects.length === 0 ? "Create your first task project using the button in the sidebar" : "Or create a new one"}
+                </p>
+              </div>
+              {projects.length === 0 && (
+                <Button onClick={() => setShowNewProjectModal(true)} className="gap-2">
+                  <Plus className="size-4" />
+                  Create First Project
+                </Button>
+              )}
             </div>
           ) : (
             <>

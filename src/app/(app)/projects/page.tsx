@@ -293,10 +293,10 @@ export default function ProjectsPage() {
                   </div>
 
                   <h3 className="font-semibold text-foreground">
-                    {p.storeNumber} — {p.storeName}, {p.storeState}
+                    {[p.storeNumber, p.storeName, p.storeState].filter(Boolean).join(" — ") || "Untitled Project"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {PROJECT_TYPE_LABELS[p.projectType as keyof typeof PROJECT_TYPE_LABELS]}
+                    {PROJECT_TYPE_LABELS[p.projectType as keyof typeof PROJECT_TYPE_LABELS] || p.projectType || "Unknown Type"}
                   </p>
 
                   <div className="mt-4 pt-3 border-t space-y-2">
