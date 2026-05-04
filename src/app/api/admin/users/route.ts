@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminAuth, adminDb } from "@/lib/firebase-admin"
+import { requireRoles } from "@/lib/firebase-admin/request-auth"
 
 function generateTempPassword(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$"
@@ -8,6 +9,9 @@ function generateTempPassword(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const body = await req.json()
     const { displayName, email, role, orgId = "default" } = body
 

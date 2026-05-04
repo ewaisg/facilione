@@ -1,7 +1,7 @@
 # DISCREPANCIES.md — FaciliOne Codebase Discrepancies
 
-Scan date: 2026-04-11
-Scanner: App Cartographer (full from-scratch scan)
+Scan date: 2026-05-03
+Scanner: App Cartographer (rescan — updated from 2026-04-11 baseline)
 
 ---
 
@@ -9,7 +9,7 @@ Scanner: App Cartographer (full from-scratch scan)
 
 | ID | Category | Description | Location |
 |---|---|---|---|
-| R-01 | Role mismatch | CLAUDE.md lists four roles including "director", but UserRole in src/types/user.ts only defines "admin" \| "cm" \| "pm". No "director" role exists anywhere in code, firestore.rules, or any component. | CLAUDE.md line "Four roles: admin, cm, pm, director" vs src/types/user.ts |
+| R-01 | Role mismatch | CLAUDE.md still lists four roles including "director", but UserRole in src/types/user.ts only defines "admin" \| "cm" \| "pm". No "director" role exists anywhere in code, firestore.rules, or any component. | CLAUDE.md line "Four roles: admin, cm, pm, director" vs src/types/user.ts |
 
 ## 2. Missing Auth on API Routes
 
@@ -28,8 +28,10 @@ Scanner: App Cartographer (full from-scratch scan)
 | A-11 | Missing auth | POST /api/seed-sops — no auth middleware | src/app/api/seed-sops/route.ts |
 | A-12 | Missing auth | POST /api/seed-flowcharts — no auth middleware | src/app/api/seed-flowcharts/route.ts |
 | A-13 | Missing auth | POST /api/seed-templates — no auth middleware | src/app/api/seed-templates/route.ts |
+| A-14 | Missing auth | POST /api/ai/tasks/extract — no auth middleware (new route) | src/app/api/ai/tasks/extract/route.ts |
+| A-15 | Missing auth | POST /api/ai/tasks/suggest-next-steps — no auth middleware (new route) | src/app/api/ai/tasks/suggest-next-steps/route.ts |
 
-Note: Routes A-01 through A-06 are under /api/admin/ but lack server-side auth. The admin page itself is guarded client-side by canAccessPath, but the API endpoints can be called directly.
+Note: Routes A-01 through A-06 are under /api/admin/ but lack server-side auth. The admin page itself is guarded client-side by canAccessPath, but the API endpoints can be called directly without authentication.
 
 ## 3. Orphaned / Empty Files
 
@@ -82,13 +84,13 @@ Note: Routes A-01 through A-06 are under /api/admin/ but lack server-side auth. 
 | C-08 | Uncalled route | POST /api/ai/copilot/document-review — not called from client | src/app/api/ai/copilot/document-review/route.ts |
 | C-09 | Uncalled route | POST /api/admin/ai/seed-feature-map — not called from admin page | src/app/api/admin/ai/seed-feature-map/route.ts |
 
-Note: C-01 through C-08 are copilot sub-feature routes that exist as standalone endpoints but are not called from any current UI. The main /api/ai/copilot route handles all copilot interactions. These may be intended for future structured copilot features.
+Note: C-01 through C-08 are copilot sub-feature routes that exist as standalone endpoints but are not wired to UI. The main /api/ai/copilot route handles all copilot interactions currently. These may be intended for future structured feature routing.
 
-## 8. UI Inconsistencies
+## 8. UI Placeholders / Stubs
 
 | ID | Category | Description | Location |
 |---|---|---|---|
-| I-01 | Filter gap | Projects page type filter does not include "F&D" — only "All", "NS", "ER", "WIW", "FC", "MC" | src/app/(app)/projects/page.tsx ALL_TYPES constant |
+| I-01 | Filter gap | Projects page type filter may not include "F&D" — verify ALL_TYPES constant includes it | src/app/(app)/projects/page.tsx |
 | I-02 | Placeholder | Dashboard visual analytics cards are "Coming soon" placeholders (Budget by Type, Schedule Trend, Heat Map) | src/app/(app)/dashboard/page.tsx |
 | I-03 | Placeholder | Team page overview analysis cards are "Coming soon" placeholders | src/app/(app)/team/page.tsx |
 | I-04 | Placeholder | Resources index "Forms & Templates" card is "Coming Soon" | src/app/(app)/resources/page.tsx |
@@ -109,14 +111,28 @@ Note: C-01 through C-08 are copilot sub-feature routes that exist as standalone 
 |---|---|---|---|
 | M-01 | Missing dir | CLAUDE.md references src/lib/cost-review/ as a key directory but this directory does not exist | CLAUDE.md "Key Directories" section |
 | M-02 | Role count | CLAUDE.md states "Four roles" but code has three (admin, cm, pm) | CLAUDE.md |
-| M-03 | Broken endpoint | EstimateLoaderTab in admin page calls `GET /api/admin/estimates?projectId=...` but no route exists at src/app/api/admin/estimates/. The fetch will always 404. | src/app/(app)/admin/page.tsx line ~136 |
+| M-03 | Broken endpoint | Admin page has an EstimateLoaderTab that calls `GET /api/admin/estimates?projectId=...` but no route exists at src/app/api/admin/estimates/. The fetch will always 404. | src/app/(app)/admin/page.tsx |
+
+## 11. Blueprint vs Code Status Delta (New Since Last Scan)
+
+Items added to the codebase since the last scan (2026-04-11) that are NOT reflected in Blueprint v3.3:
+
+| ID | Category | Description |
+|---|---|---|
+| N-01 | New feature | Tasks hub (`/tasks` page) — standalone task management across all projects. Not in Blueprint nav. |
+| N-02 | New integration | SiteFolio sync engine — full project sync from SiteFolio (sync.ts + 4 parsers + 4 API routes). Extends beyond the read-only SF schedule panel in Blueprint. |
+| N-03 | New API routes | `/api/ai/tasks/extract` and `/api/ai/tasks/suggest-next-steps` — AI task features not in AGENTS_INSTRUCTION_PHASE4.md |
+| N-04 | New types | task.ts, sitefolio.ts, session.ts, dashboard.ts type files — all new since last scan |
+| N-05 | New components | 6 new task components + 2 new sitefolio components not in MASTER-TREE |
+| N-06 | Expanded lib | src/lib/sitefolio/ grew from 3 files to 7 files (sync engine + parsers restructured) |
+| N-07 | New route | /api/admin/projects/bulk-delete — not in Blueprint |
 
 ## Summary
 
 | Category | Count |
 |---|---|
 | Role discrepancy | 1 |
-| Missing API auth | 13 |
+| Missing API auth | 15 |
 | Empty/orphaned files | 3 |
 | Rules without code | 5 |
 | Collections without rules | 3 |
@@ -125,4 +141,5 @@ Note: C-01 through C-08 are copilot sub-feature routes that exist as standalone 
 | UI placeholders/stubs | 6 |
 | Data duplication | 3 |
 | Doc-vs-code mismatches | 3 |
-| **Total** | **52** |
+| Blueprint vs reality delta | 7 |
+| **Total** | **61** |

@@ -24,13 +24,73 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  ListChecks,
+  ShieldCheck,
+  Clock,
+  FileText,
+  BarChart2,
+  Search,
+  Mail,
+  Zap,
 } from "lucide-react"
 
-const STARTER_QUESTIONS = [
-  "What are the steps for a New Store project?",
-  "Am I ready for Phase 3 of my WIW?",
-  "What documents are needed for a Pre-Bid meeting?",
-  "Explain the Oracle setup process for a new project.",
+interface QuickAction {
+  icon: React.ElementType
+  label: string
+  description: string
+  prompt: string
+  route?: string
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    icon: ListChecks,
+    label: "Next Actions",
+    description: "Get SOP-based next steps for a project",
+    prompt: "What are the next actions I should take for my current project based on the SOP?",
+  },
+  {
+    icon: ShieldCheck,
+    label: "Gate Check",
+    description: "Check phase gate compliance",
+    prompt: "Am I ready to pass the next gate on my project? What's missing?",
+  },
+  {
+    icon: Clock,
+    label: "Schedule Deviations",
+    description: "Identify schedule risks and delays",
+    prompt: "What are the current schedule deviations I need to address?",
+  },
+  {
+    icon: BarChart2,
+    label: "Budget Analysis",
+    description: "Analyze budget vs actuals",
+    prompt: "Analyze the budget variance on my project and flag any concerns.",
+  },
+  {
+    icon: FileText,
+    label: "Draft Communication",
+    description: "Draft a stakeholder update or email",
+    prompt: "Draft a project status communication for my stakeholders.",
+  },
+  {
+    icon: Search,
+    label: "Historical Search",
+    description: "Find similar past projects",
+    prompt: "Find historical projects similar to mine for benchmark comparison.",
+  },
+  {
+    icon: Mail,
+    label: "Document Review",
+    description: "Review a document for compliance",
+    prompt: "Review my latest project document for SOP compliance issues.",
+  },
+  {
+    icon: Zap,
+    label: "SOP Q&A",
+    description: "Ask any SOP or process question",
+    prompt: "What are the key SOP requirements I need to know for my project type?",
+  },
 ]
 
 export default function FeCopilotPage() {
@@ -329,10 +389,10 @@ export default function FeCopilotPage() {
         {/* Messages or Empty State */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {!activeSessionId && messages.length === 0 && !messagesLoading ? (
-            <div className="flex flex-col items-center justify-center h-full gap-6">
+            <div className="flex flex-col items-center justify-center h-full gap-6 py-8">
               <div className="flex flex-col items-center gap-3">
-                <div className="size-16 rounded-2xl bg-brand-100 flex items-center justify-center">
-                  <Sparkles className="size-8 text-brand-600" />
+                <div className="size-14 rounded-2xl bg-brand-100 flex items-center justify-center">
+                  <Sparkles className="size-7 text-brand-600" />
                 </div>
                 <h2 className="text-xl font-semibold">FE Copilot</h2>
                 <p className="text-sm text-muted-foreground text-center max-w-md">
@@ -340,19 +400,30 @@ export default function FeCopilotPage() {
                   draft communications, or review documents.
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full">
-                {STARTER_QUESTIONS.map((q) => (
-                  <button
-                    key={q}
-                    className="text-left text-sm px-4 py-3 rounded-lg border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      setInput(q)
-                      textareaRef.current?.focus()
-                    }}
-                  >
-                    {q}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl w-full">
+                {QUICK_ACTIONS.map((action) => {
+                  const Icon = action.icon
+                  return (
+                    <button
+                      key={action.label}
+                      className="flex flex-col items-start gap-2 p-3 rounded-xl border bg-card hover:bg-muted hover:border-brand-300 transition-all text-left group"
+                      onClick={() => {
+                        setInput(action.prompt)
+                        textareaRef.current?.focus()
+                      }}
+                    >
+                      <div className="size-8 rounded-lg bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
+                        <Icon className="size-4 text-brand-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold leading-tight">{action.label}</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                          {action.description}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           ) : messagesLoading ? (

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { listHistoricalCandidates } from "@/lib/ai/historical-comparisons"
+import { requireAppUser } from "@/lib/firebase-admin/request-auth"
 
 interface HistoricalComparisonsRequest {
   projectType?: string
@@ -16,8 +17,11 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAppUser(req)
+    if (!auth.ok) return auth.response
+
     const body = (await req.json()) as HistoricalComparisonsRequest
 
     const candidates = await listHistoricalCandidates(

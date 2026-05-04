@@ -1,7 +1,7 @@
 # FaciliOne — Blueprint v3.3
 **Comprehensive Platform Plan · Revised Navigation · Smart Tools · Full Automation · Customizable**
 
-> **Status:** Phase 1 complete and deployed. FaciliTools migration (Steps 1–4) complete and deployed. Admin panel and settings deployed. Phase 2 ready to start.
+> **Status:** Phase 1 ✅ · Phase 1.5 ✅ · Phase 1.6 (restructuring + AI infrastructure) ✅ · Phase 2 🟡 (partial — Gantt + Kanban + Forms AI done; budget tracker, document upload, meetings, calendar not started) · Phase 3 ⬜ · Phase 4 🟡 (all AI routes built; import engine, remaining Smart Tools not started) · Phase 5 🟡 (Copilot UI + all AI routes built; vector RAG and analytics charts pending) · Phase 6 ⬜
 > Works alongside Oracle · Coupa · SiteFolio — not instead of them.
 
 <!-- ============================================================
@@ -937,6 +937,30 @@ facilione/
 
 ---
 
+### Phase 1.6 — Post-Restructuring Additions ✅ COMPLETE
+<!-- [v3.4 ADDED] — Documents work done after the Phase 1→3 restructuring (AGENTS_INSTRUCTIONS_ph1to3.md) -->
+
+**Goal:** Extend the restructured app with additional features discovered during Phase 4 work.
+
+| Step | Description | Status | Files Created/Modified |
+|---|---|---|---|
+| Step 1 | AI infrastructure + Phase 4 routes | ✅ | 15 AI API routes, invokeAiText client, runtime-config, featureModelMap |
+| Step 2 | FE Copilot full page + inline panel | ✅ | fe-copilot/page.tsx, inline-panel.tsx |
+| Step 3 | Forms Tab AI features (auto-populate, agenda, minutes) | ✅ | project-forms-tab.tsx + 5 AI routes |
+| Step 4 | Reports Tab AI features (weekly status, schedule status) | ✅ | ai-weekly-status.tsx, ai-schedule-status.tsx, 2 AI routes |
+| Step 5 | Dashboard AI brief (auto-generate on load) | ✅ | dashboard/page.tsx updated, portfolio-insights route |
+| Step 6 | Tasks hub + Kanban board | ✅ | tasks/page.tsx, task-kanban-board.tsx + 5 task components |
+| Step 7 | AI task extraction + next steps | ✅ | /api/ai/tasks/extract, /api/ai/tasks/suggest-next-steps |
+| Step 8 | SiteFolio sync engine | ✅ | lib/sitefolio/sync.ts + 4 parsers + 4 API routes |
+| Step 9 | SiteFolio display components | ✅ | sf-overview-panel.tsx, sf-synced-schedule.tsx |
+| Step 10 | Admin: AI Setup tab + bulk-delete | ✅ | admin/page.tsx restructured + bulk-delete route |
+| Step 11 | User session tracking | ✅ | lib/firebase/sessions.ts, src/types/session.ts |
+| Step 12 | Historical comparisons infrastructure | ✅ | lib/ai/historical-comparisons.ts, comparison-snapshot-parser.ts |
+| Step 13 | Profile page | ✅ | profile/page.tsx |
+| Step 14 | Team page (partial) | 🟡 | team/page.tsx — directory + assignments; analytics placeholders |
+
+---
+
 ### Phase 2 — Core PM Modules
 
 **Goal:** Full project management — schedule, budget, documents, meetings, tasks, calendar.
@@ -1085,16 +1109,43 @@ facilione/
 | 1.5.21 | Static HTML cleanup (remove from /public/) | ⏭️ | Optional — FaciliTools is separate Vercel project |
 | 1.5.22 | Wire next-themes into Providers | ⬜ | Dark/light mode toggle |
 
+<!-- [v3.4 ADDED] — Documents post-restructuring work not in v3.3 -->
+### Phase 1.6 — Post-Restructuring Additions ✅ COMPLETE
+
+| # | Task | Status | Notes |
+|---|---|---|---|
+| 1.6.01 | Build FE Copilot full-page chat + session management | ✅ | fe-copilot/page.tsx, AiSession types, Firestore CRUD |
+| 1.6.02 | Build Copilot inline panel | ✅ | src/components/copilot/inline-panel.tsx |
+| 1.6.03 | Build Copilot streaming API route | ✅ | POST /api/ai/copilot/route.ts — SSE streaming |
+| 1.6.04 | Build all 8 copilot sub-feature API routes | ✅ | sop-qa, next-actions, draft-communication, gate-check, historical-search, budget-analysis, schedule-deviations, document-review |
+| 1.6.05 | Build Forms tab AI features (auto-populate, agenda, minutes) | ✅ | project-forms-tab.tsx + 3 AI routes |
+| 1.6.06 | Build Reports tab AI features (weekly status, schedule status) | ✅ | ai-weekly-status.tsx, ai-schedule-status.tsx |
+| 1.6.07 | Build Dashboard AI brief (auto-generate on load) | ✅ | POST /api/ai/portfolio-insights wired to dashboard |
+| 1.6.08 | Build Tasks hub page | ✅ | src/app/(app)/tasks/page.tsx — cross-project task management |
+| 1.6.09 | Build task Kanban board | ✅ | task-kanban-board.tsx + 4 supporting components |
+| 1.6.10 | Build AI task extraction + next-steps routes | ✅ | /api/ai/tasks/extract + /api/ai/tasks/suggest-next-steps |
+| 1.6.11 | Build SiteFolio sync engine | ✅ | lib/sitefolio/sync.ts — full project sync (overview + schedule) |
+| 1.6.12 | Build SiteFolio parsers | ✅ | parsers/overview.ts, schedule.ts, projects-list.ts |
+| 1.6.13 | Build SiteFolio API routes | ✅ | /api/sitefolio/sync, /api/sitefolio/sync/status, /api/sitefolio/import, /api/sitefolio/import/preview |
+| 1.6.14 | Build SiteFolio display components | ✅ | sf-overview-panel.tsx, sf-synced-schedule.tsx |
+| 1.6.15 | Restructure Admin to 3 tabs (Users, Projects, AI Setup) | ✅ | Removed Seed Data tab; extracted AI Setup from System tab |
+| 1.6.16 | Build AI infrastructure (runtime-config, historical-comparisons) | ✅ | lib/ai/runtime-config.ts, historical-comparisons.ts, comparison-snapshot-parser.ts |
+| 1.6.17 | Build Profile page | ✅ | src/app/(app)/profile/page.tsx |
+| 1.6.18 | Build Team page (partial) | 🟡 | Directory + assignments; analytics section is placeholders |
+| 1.6.19 | Wire copilot sub-feature routes to Copilot UI | ⬜ | Routes built — need UI routing logic to invoke each feature |
+| 1.6.20 | Add auth middleware to unprotected admin + AI routes | ⬜ | 15 routes missing requireRoles/requireAppUser |
+| 1.6.21 | Fix broken /api/admin/estimates endpoint | ⬜ | Admin page calls this but route doesn't exist |
+
 ### Phase 2 — Core PM Modules
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 2.01 | Build Gantt chart component | ⬜ | |
+| 2.01 | Build Gantt chart component | 🟡 | Basic `gantt-chart.tsx` exists — phase bars + milestone editing; no zoom/drag/baseline yet |
 | 2.02 | Gantt: zoom controls (week/month/quarter) | ⬜ | |
 | 2.03 | Gantt: baseline vs. actual toggle | ⬜ | |
 | 2.04 | Gantt: week-offset reference column | ⬜ | |
 | 2.05 | Gantt: drag-to-adjust with confirmation | ⬜ | |
-| 2.06 | Build budget tracker page | ⬜ | |
+| 2.06 | Build budget tracker page | ⬜ | Budget tab exists but shows Estimator link + Cost Review stub only |
 | 2.07 | Budget: line-item table with category grouping | ⬜ | |
 | 2.08 | Budget: variance + EAC calculations | ⬜ | |
 | 2.09 | Budget: bar chart (Recharts) | ⬜ | |
@@ -1102,16 +1153,16 @@ facilione/
 | 2.11 | Build document upload module (Firebase Storage + type tagging + version history) | ⬜ | |
 | 2.12 | Documents: SiteFolio path reference per document type | ⬜ | |
 | 2.13 | Documents: bulk ZIP download | ⬜ | |
-| 2.14 | Build meetings module (6 types) | ⬜ | |
-| 2.15 | Meetings: agenda builder (drag-and-drop) | ⬜ | |
-| 2.16 | Meetings: minutes capture + inline action items | ⬜ | |
+| 2.14 | Build meetings module (6 types) | 🟡 | Forms tab has 5 pre-structured templates with AI; full meetings module (agenda drag, action items, Word export) not built |
+| 2.15 | Meetings: agenda builder (drag-and-drop) | 🟡 | AI agenda builder route built; drag-drop UI not wired |
+| 2.16 | Meetings: minutes capture + inline action items | 🟡 | AI minutes generation from typed notes built; action item tracking not built |
 | 2.17 | Meetings: action items carry forward | ⬜ | |
-| 2.18 | Meetings: Word (.docx) export | ⬜ | |
-| 2.19 | Build task manager (Kanban + list) | ⬜ | |
-| 2.20 | Tasks: auto-create from phase checklist on project creation | ⬜ | |
-| 2.21 | Build Calendar (portfolio-wide + 3-week look-ahead) | ⬜ | |
-| 2.22 | Wire all modules to Firestore real-time | ⬜ | |
-| 2.23 | Wire all project detail tabs (conditional visibility per project type) | ⬜ | |
+| 2.18 | Meetings: Word (.docx) export | ⬜ | Export formats supported in forms tab but Word not yet wired |
+| 2.19 | Build task manager (Kanban + list) | ✅ | Kanban board in project detail (Past Due / In Progress / Done) + standalone Tasks hub |
+| 2.20 | Tasks: auto-create from phase checklist on project creation | ⬜ | AI task extraction exists but auto-create on creation not wired |
+| 2.21 | Build Calendar (portfolio-wide + 3-week look-ahead) | ⬜ | Not started |
+| 2.22 | Wire all modules to Firestore real-time | 🟡 | Projects + phases real-time; tasks and forms not yet Firestore-backed |
+| 2.23 | Wire all project detail tabs (conditional visibility per project type) | ✅ | 5 tabs (Schedule, Budget, Forms, Tasks, Reports) all wired |
 
 ### Phase 3 — FE Modules
 
@@ -1158,21 +1209,21 @@ facilione/
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 5.01 | Set up Claude API client in lib/ai/ | ⬜ | |
-| 5.02 | Build Copilot full-page interface (streaming) | ⬜ | |
-| 5.03 | Build inline copilot panel (right sidebar) | ⬜ | |
-| 5.04 | Implement project context injection | ⬜ | |
-| 5.05 | Build KB RAG pipeline (chunk → store → retrieve → inject) | ⬜ | |
-| 5.06 | Enforce citation requirement in system prompt | ⬜ | |
-| 5.07 | Build AI: Next-Action Assistant | ⬜ | |
-| 5.08 | Build AI: Document Reviewer (PDF Q&A) | ⬜ | |
-| 5.09 | Build AI: Communication Drafter | ⬜ | |
-| 5.10 | Build AI: Historical Data Search + Proposals | ⬜ | |
-| 5.11 | Build AI: Budget Variance Analysis (post-import) | ⬜ | |
-| 5.12 | Build AI: Schedule Deviation Alerts | ⬜ | |
-| 5.13 | Build AI: Gate Compliance Check | ⬜ | |
-| 5.14 | Build Analytics: Portfolio summary + budget charts + schedule health | ⬜ | |
-| 5.15 | Build Analytics: Resource utilization + vendor performance + historical benchmarks | ⬜ | |
+| 5.01 | Set up Claude API client in lib/ai/ | ✅ | `src/lib/ai/client.ts` — invokeAiText + invokeAiModelText |
+| 5.02 | Build Copilot full-page interface (streaming) | ✅ | `src/app/(app)/fe-copilot/page.tsx` — session history, streaming, SOP-grounded |
+| 5.03 | Build inline copilot panel (right sidebar) | ✅ | `src/components/copilot/inline-panel.tsx` — project-context aware |
+| 5.04 | Implement project context injection | ✅ | Inline panel + main copilot route inject projectId, projectType |
+| 5.05 | Build KB RAG pipeline (chunk → store → retrieve → inject) | 🟡 | SOP constants injected as context; true vector RAG not implemented |
+| 5.06 | Enforce citation requirement in system prompt | ✅ | All AI feature prompts require SOP citations — no fabrication rule enforced |
+| 5.07 | Build AI: Next-Action Assistant | ✅ | Route + prompt built at `/api/ai/copilot/next-actions` — not yet wired to UI separately |
+| 5.08 | Build AI: Document Reviewer (PDF Q&A) | ✅ | Route + prompt built at `/api/ai/copilot/document-review` — stub in UI |
+| 5.09 | Build AI: Communication Drafter | ✅ | Route + prompt built at `/api/ai/copilot/draft-communication` — not wired to UI separately |
+| 5.10 | Build AI: Historical Data Search + Proposals | ✅ | Route + scoring at `/api/ai/copilot/historical-search` + `lib/ai/historical-comparisons.ts` |
+| 5.11 | Build AI: Budget Variance Analysis (post-import) | ✅ | Route + prompt built at `/api/ai/copilot/budget-analysis` — not wired to import trigger |
+| 5.12 | Build AI: Schedule Deviation Alerts | ✅ | Route + prompt built at `/api/ai/copilot/schedule-deviations` — not wired to UI separately |
+| 5.13 | Build AI: Gate Compliance Check | ✅ | Route + prompt built at `/api/ai/copilot/gate-check` — not wired to UI separately |
+| 5.14 | Build Analytics: Portfolio summary + budget charts + schedule health | 🟡 | Dashboard KPIs + AI brief done; visual charts (budget by type, trend, heat map) are placeholders |
+| 5.15 | Build Analytics: Resource utilization + vendor performance + historical benchmarks | ⬜ | Not started |
 
 ### Phase 6 — Customization, Automation & Mobile
 
@@ -1180,7 +1231,7 @@ facilione/
 |---|---|---|---|
 | 6.01 | Build Admin: Branding (app name override, logo, color — replaces FaciliOne placeholder) | ⬜ | Per P-11 |
 | 6.02 | Build Admin: Organization settings + Nav Builder + Module Config + Custom form builder | ⬜ | |
-| 6.03 | Build Team module | ⬜ | |
+| 6.03 | Build Team module | 🟡 | Directory + project assignments built; overview analysis section is placeholder |
 | 6.04 | Build Automation Engine (Firebase Cloud Functions — all 6 triggers) | ⬜ | |
 | 6.05 | Build in-app notification center (bell icon + feed + dismiss/snooze) | ⬜ | Per P-12 |
 | 6.06 | Build Risk Register module | ⬜ | |
@@ -1320,5 +1371,5 @@ None of these block Phase 2. Items marked with the phase they must be resolved b
 
 ---
 
-*End of FaciliOne Blueprint v3.3*
-*Last updated: March 27, 2026 — Phase 1 + Phase 1.5 (FaciliTools migration, admin, settings, performance) complete and deployed*
+*End of FaciliOne Blueprint v3.4*
+*Last updated: May 3, 2026 — Phase 1.6 added (AI infrastructure, FE Copilot, Tasks hub, SiteFolio sync engine, restructured admin). To-do tracker updated to reflect actual codebase state.*

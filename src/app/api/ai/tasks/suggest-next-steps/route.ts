@@ -2,8 +2,9 @@
  * AI Next Steps Suggestion - Generate next steps based on project context
  */
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { invokeAiText } from "@/lib/ai/client"
+import { requireAppUser } from "@/lib/firebase-admin/request-auth"
 import { getProject } from "@/lib/firebase/firestore"
 
 interface SuggestNextStepsRequest {
@@ -11,8 +12,11 @@ interface SuggestNextStepsRequest {
   taskProjectId?: string
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAppUser(req)
+    if (!auth.ok) return auth.response
+
     const body = (await req.json()) as SuggestNextStepsRequest
 
     if (!body.projectId) {

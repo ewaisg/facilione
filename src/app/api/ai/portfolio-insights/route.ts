@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { invokeAiText } from "@/lib/ai/client"
+import { requireAppUser } from "@/lib/firebase-admin/request-auth"
 
 interface PortfolioInsightsRequest {
   metrics: {
@@ -59,8 +60,11 @@ function buildPrompt(data: PortfolioInsightsRequest): string {
   ].join("\n")
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAppUser(req)
+    if (!auth.ok) return auth.response
+
     const body = (await req.json()) as PortfolioInsightsRequest
 
     const prompt = buildPrompt(body)

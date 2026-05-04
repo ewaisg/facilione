@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminAuth, adminDb } from "@/lib/firebase-admin"
+import { requireRoles } from "@/lib/firebase-admin/request-auth"
 
 /**
  * PATCH /api/admin/users/[uid]
@@ -10,6 +11,9 @@ export async function PATCH(
   { params }: { params: Promise<{ uid: string }> },
 ) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const { uid } = await params
     const body = await req.json()
     const { role, displayName } = body
@@ -42,10 +46,13 @@ export async function PATCH(
  * Delete user from Firebase Auth and Firestore
  */
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ uid: string }> },
 ) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const { uid } = await params
 
     // Delete from Firebase Auth

@@ -40,7 +40,7 @@ No test framework is configured.
 
 - Firebase email/password auth only — no self-signup, admin creates users.
 - `AuthProvider` (`src/lib/firebase/auth-context.tsx`) wraps the app, provides `useAuth()` hook returning `AppUser`.
-- Four roles: `admin`, `cm` (Construction Manager), `pm` (Project Manager), `director`.
+- Three roles: `admin`, `cm` (Construction Manager), `pm` (Project Manager). No "director" role exists in code.
 - Client-side route guarding in `src/app/(app)/layout.tsx` via `canAccessPath()` from `src/lib/access-control.ts`.
 - API routes authenticate via `__session` cookie using Firebase Admin (`src/lib/firebase-admin/request-auth.ts`).
 
@@ -50,7 +50,7 @@ No test framework is configured.
 - `src/lib/firebase-admin/` — Server-side Firebase Admin SDK
 - `src/lib/schedule/` — Schedule/Gantt logic, SiteFolio import parsers, template engine
 - `src/lib/ai/` — AI client, runtime config, comparison/historical analysis
-- `src/lib/cost-review/` — Cost review export logic
+- `src/lib/sitefolio/` — SiteFolio sync engine, parsers (overview, schedule, projects list), session store
 - `src/types/` — All TypeScript types (barrel-exported from `src/types/index.ts`)
 - `src/constants/` — Domain data: project types, SOP content, Oracle report definitions, estimate presets, schedule data
 - `src/components/ui/` — Reusable shadcn/ui components

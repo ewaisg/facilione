@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { invokeAiText } from "@/lib/ai/client"
+import { requireAppUser } from "@/lib/firebase-admin/request-auth"
 
 interface CostEstimateRequest {
   projectInfo: {
@@ -133,8 +134,11 @@ function parseModelJson(raw: string): CostEstimateResponse | null {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAppUser(req)
+    if (!auth.ok) return auth.response
+
     const body = (await req.json()) as CostEstimateRequest
 
     if (!body?.sections?.length) {

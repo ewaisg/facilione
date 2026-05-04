@@ -1,7 +1,7 @@
 # MASTER-TREE.md — FaciliOne Codebase Map
 
-Scan date: 2026-04-11
-Scanner: App Cartographer (full from-scratch scan of every file on disk)
+Scan date: 2026-05-03
+Scanner: App Cartographer (full rescan — updated from 2026-04-11 baseline)
 
 ---
 
@@ -24,6 +24,7 @@ src/app/
     │   ├── page.tsx                        Project list (filters, schedule progress, real-time subscription)
     │   └── [id]/page.tsx                   Project detail (5 tabs: Schedule, Budget, Forms, Tasks, Reports)
     ├── team/page.tsx                       Team directory (user list, project assignments, workload stats)
+    ├── tasks/page.tsx                      Tasks hub (standalone task management, all projects)
     ├── fe-copilot/page.tsx                 FE Copilot chat (session management, streaming, SOP-grounded)
     ├── smart-tools/
     │   ├── page.tsx                        Smart Tools index (Estimator live, Bid Comparison planned)
@@ -42,7 +43,7 @@ src/app/
 src/components/
 ├── providers.tsx                           Wraps AuthProvider + TooltipProvider
 ├── layout/
-│   ├── sidebar.tsx                         Nav sidebar (7 items, role-filtered, collapsible)
+│   ├── sidebar.tsx                         Nav sidebar (7 items, role-filtered, collapsible, profile at bottom)
 │   └── topbar.tsx                          Top bar (page title, search btn, notifications btn, user menu)
 ├── copilot/
 │   └── inline-panel.tsx                    Project-context copilot panel (used in project detail page)
@@ -51,8 +52,16 @@ src/components/
 ├── schedule/
 │   ├── gantt-chart.tsx                     Gantt chart (phase-based, milestone date editing)
 │   └── sf-schedule-panel.tsx               SiteFolio schedule panel (weeks-to-open / day-offset, HTML import)
+├── sitefolio/
+│   ├── sf-overview-panel.tsx               SiteFolio overview panel (project details from SF sync)
+│   └── sf-synced-schedule.tsx              SiteFolio synced schedule display (from sync data)
 ├── tasks/
-│   └── task-kanban-board.tsx               Task kanban board (derived from phases/checklist items)
+│   ├── task-kanban-board.tsx               Task kanban board (derived from phases/checklist items)
+│   ├── task-status-badge.tsx               Status badge for tasks (colored pill)
+│   ├── task-project-sidebar.tsx            Project context sidebar for tasks hub
+│   ├── next-steps-list.tsx                 AI-suggested next steps list component
+│   ├── task-section.tsx                    Section grouping for tasks
+│   └── task-table.tsx                      Table view of tasks
 ├── reports/
 │   ├── ipecc-builder.tsx                   IPECC packet builder (Oracle report uploads, stub)
 │   ├── ai-weekly-status.tsx                AI weekly status report generator
@@ -91,7 +100,8 @@ src/app/api/
 │   ├── projects/
 │   │   ├── create/route.ts                 POST — Create project (with optional phase seeding)
 │   │   ├── list/route.ts                   GET  — List all projects
-│   │   └── [id]/route.ts                   PATCH — Update project fields
+│   │   ├── [id]/route.ts                   PATCH — Update project fields
+│   │   └── bulk-delete/route.ts            POST — Bulk delete multiple projects (admin only)
 │   ├── ai/
 │   │   ├── config/route.ts                 GET/PUT — AI settings CRUD (models, feature map, agents)
 │   │   ├── test/route.ts                   POST — Test model connectivity
@@ -120,6 +130,9 @@ src/app/api/
 │   │   ├── generate-minutes/route.ts       POST — Generate meeting minutes (feature: forms-generate-minutes)
 │   │   ├── image-minutes/route.ts          POST — OCR minutes from image (stub)
 │   │   └── transcribe-minutes/route.ts     POST — Transcribe audio to minutes (stub)
+│   ├── tasks/
+│   │   ├── extract/route.ts                POST — Extract actionable tasks from text (AI)
+│   │   └── suggest-next-steps/route.ts     POST — AI-suggested next steps for a project
 │   ├── cost-estimate/route.ts              POST — AI cost estimate analysis (feature: cost-estimate)
 │   ├── historical-comparisons/route.ts     POST — Historical comparable projects search
 │   ├── portfolio-insights/route.ts         POST — Portfolio AI intelligence (feature: portfolio-insights)
@@ -127,13 +140,19 @@ src/app/api/
 │   │   └── schedule-status/route.ts        POST — Schedule status report (feature: reports-schedule-status)
 │   └── weekly-update-draft/route.ts        POST — Weekly update draft (feature: weekly-update-draft)
 │
+├── sitefolio/
+│   ├── auth/route.ts                       GET  — Check SiteFolio session status (admin only)
+│   ├── proxy/[...path]/route.ts            GET/POST — Proxy SiteFolio ASMX/page requests (admin only)
+│   ├── sync/
+│   │   ├── route.ts                        POST — Sync projects from SiteFolio (admin only; full or single)
+│   │   └── status/route.ts                 GET  — Get SiteFolio sync status
+│   └── import/
+│       ├── route.ts                        POST — Import a single SiteFolio project by job number
+│       └── preview/route.ts                POST — Preview parsed SiteFolio project data before import
+│
 ├── seed-sops/route.ts                      POST — Seed SOP data to Firestore kb/sops
 ├── seed-flowcharts/route.ts                POST — Seed flowchart data to Firestore kb/flowcharts
-├── seed-templates/route.ts                 POST — Seed schedule templates to Firestore kb/templates
-│
-└── sitefolio/
-    ├── auth/route.ts                       GET  — Check SiteFolio session status (admin only)
-    └── proxy/[...path]/route.ts            GET/POST — Proxy SiteFolio ASMX/page requests (admin only)
+└── seed-templates/route.ts                 POST — Seed schedule templates to Firestore kb/templates
 ```
 
 ## TYPES
@@ -149,7 +168,11 @@ src/types/
 ├── smart-tools.ts                          SmartToolId ("estimator"|"bid-comparison"), SmartToolMeta
 ├── customization.ts                        OrgBranding, NavItem, NavConfig, ModuleConfig
 ├── sop.ts                                  SOPStep, SOPPhase, SOPScheduleItem, SOPProject, SOPDataMap
-└── ai-session.ts                           AiSession, AiMessage
+├── ai-session.ts                           AiSession, AiMessage
+├── task.ts                                 Task types (standalone and project-linked task management)
+├── sitefolio.ts                            SiteFolioSyncMeta and SiteFolio integration types
+├── session.ts                              User session tracking types (multi-device)
+└── dashboard.ts                            PortfolioAiCache and dashboard-specific types
 ```
 
 ## CONSTANTS
@@ -180,13 +203,14 @@ src/lib/
 │   ├── firestore.ts                        Project + Phase + WeeklyUpdate CRUD (10 functions)
 │   ├── estimates.ts                        Estimate CRUD (6 functions)
 │   ├── ai-sessions.ts                      AI session + message CRUD (6 functions)
+│   ├── sessions.ts                         User session tracking (multi-device session management)
 │   └── storage.ts                          deleteStorageFile(), uploadProjectImportFile()
 ├── firebase-admin/
 │   ├── index.ts                            Firebase Admin SDK lazy init (adminAuth, adminDb)
 │   └── request-auth.ts                     requireAppUser(), requireRoles()
 ├── ai/
 │   ├── client.ts                           invokeAiText(), invokeAiModelText()
-│   ├── runtime-config.ts                   AiFeature (15 features), runtime config resolution from systemSettings/ai
+│   ├── runtime-config.ts                   AiFeature (17 features), runtime config resolution from systemSettings/ai
 │   ├── historical-comparisons.ts           listHistoricalCandidates() (searches estimates, costReviews, comparisonSnapshots, estimateComparisonForms)
 │   └── comparison-snapshot-parser.ts       parseComparisonSnapshotWorkbook() (XLSX parser)
 ├── schedule/
@@ -202,16 +226,22 @@ src/lib/
 ├── sitefolio/
 │   ├── fetch.ts                            sfAsmxCall(), sfPageFetch()
 │   ├── playwright-auth.ts                  authenticateSiteFolio() (Playwright SSO)
-│   └── session-store.ts                    getStoredSession(), storeSession(), getSessionStatus()
+│   ├── session-store.ts                    getStoredSession(), storeSession(), getSessionStatus()
+│   ├── sync.ts                             syncProject(), syncAllProjects(), buildProjectsListUrl() — full SF sync engine
+│   └── parsers/
+│       ├── index.ts                        Barrel re-export for all parsers
+│       ├── overview.ts                     parseOverview() — SiteFolio project overview HTML
+│       ├── schedule.ts                     parseSchedule() — SiteFolio schedule HTML
+│       └── projects-list.ts               parseProjectsList() — SiteFolio projects list HTML
 ├── customization/index.ts                  Empty placeholder (Phase 6)
 │
 src/hooks/index.ts                          Empty placeholder
 src/middleware.ts                           Edge middleware (cookie auth redirect)
 │
 src/docs/
-├── FaciliOne_Blueprint.md                  Full product blueprint (1323 lines)
-├── AGENTS_INSTRUCTIONS_ph1to3.md           Agent instructions for phases 1-3 (277 lines)
-├── AGENTS_INSTRUCTION_PHASE4.md            Agent instructions for phase 4 (362 lines)
+├── FaciliOne_Blueprint.md                  Full product blueprint (1323 lines, v3.3)
+├── AGENTS_INSTRUCTIONS_ph1to3.md           Agent instructions for phases 1-3 (restructuring execution plan)
+├── AGENTS_INSTRUCTION_PHASE4.md            Agent instructions for phase 4 (AI features execution plan)
 └── forms_examples/
     ├── Budget_Store_Project_Cost_by_Line_Item.xlsx   Sample budget form
     └── New_store_project_schedule_template.xls       Sample schedule template
@@ -224,7 +254,7 @@ src/docs/
 | users/{userId} | uid, email, displayName, role, orgId, assignedProjectIds, managedUserIds, forcePasswordChange, createdAt, createdBy, avatarUrl? | Code + Rules |
 | organizations/{orgId} | (org-level config, schema TBD) | Rules only |
 | customization/{orgId}/... | (OrgBranding, NavConfig, ModuleConfig — Phase 6) | Rules only |
-| projects/{projectId} | id, storeNumber, storeName, storeAddress, storeCity, storeState, projectType, status, healthStatus, grandOpeningDate, constructionStartDate, pmUserId, cmUserId, orgId, oracleParentProject, oracleProjectNumber, currentPhaseIndex, totalBudget, committedCost, actualCost, forecastCost, notes, tags, createdAt, updatedAt, sfSchedule? | Code + Rules |
+| projects/{projectId} | id, storeNumber, storeName, storeAddress, storeCity, storeState, projectType, status, healthStatus, grandOpeningDate, constructionStartDate, pmUserId, cmUserId, orgId, oracleParentProject, oracleProjectNumber, currentPhaseIndex, totalBudget, committedCost, actualCost, forecastCost, notes, tags, createdAt, updatedAt, sfSchedule?, siteFolioJobNumber?, siteFolioSync? | Code + Rules |
 | projects/{pid}/phases/{phaseId} | id, projectId, phaseNumber, name, targetStartWeekOffset, targetEndWeekOffset, targetStartDate, targetEndDate, actualStartDate, actualEndDate, status, checklistItems[], sopReference, notes | Code + Rules |
 | projects/{pid}/weeklyUpdates/{uid} | projectId, weekStart, comment, createdBy, createdByName, createdAt, updatedAt | Code |
 | kb/sops/types/{type} | SOPProject fields | Seeded |
@@ -276,7 +306,7 @@ src/docs/
 | costReviews | projectId ASC, reviewDate DESC | COLLECTION |
 | costReviewImports | costReviewId ASC, importedAt DESC | COLLECTION |
 
-## AI FEATURES (15 total)
+## AI FEATURES (17 total)
 
 | Feature Key | Default Model | API Route | Called By |
 |---|---|---|---|
@@ -295,3 +325,35 @@ src/docs/
 | portfolio-insights | gpt-4o | /api/ai/portfolio-insights | DashboardPage |
 | cost-estimate | gpt-4o | /api/ai/cost-estimate | EstimatorPage |
 | weekly-update-draft | gpt-4o | /api/ai/weekly-update-draft | AiWeeklyStatus |
+| tasks-extract | gpt-4o-mini | /api/ai/tasks/extract | Tasks hub / project detail |
+| tasks-next-steps | gpt-4o-mini | /api/ai/tasks/suggest-next-steps | NextStepsList component |
+
+## NEW SINCE LAST SCAN (2026-04-11 → 2026-05-03)
+
+| Category | Item | Notes |
+|---|---|---|
+| Page | src/app/(app)/tasks/page.tsx | New standalone tasks hub page |
+| Component | src/components/sitefolio/sf-overview-panel.tsx | SiteFolio project overview display |
+| Component | src/components/sitefolio/sf-synced-schedule.tsx | SiteFolio synced schedule display |
+| Component | src/components/tasks/task-status-badge.tsx | Task status badge |
+| Component | src/components/tasks/task-project-sidebar.tsx | Project sidebar for tasks hub |
+| Component | src/components/tasks/next-steps-list.tsx | AI next steps list |
+| Component | src/components/tasks/task-section.tsx | Section grouping for tasks |
+| Component | src/components/tasks/task-table.tsx | Table view for tasks |
+| API Route | /api/sitefolio/sync/route.ts | SiteFolio full/single project sync (admin) |
+| API Route | /api/sitefolio/sync/status/route.ts | Sync status endpoint |
+| API Route | /api/sitefolio/import/route.ts | Import single SF project |
+| API Route | /api/sitefolio/import/preview/route.ts | Preview SF project before import |
+| API Route | /api/admin/projects/bulk-delete/route.ts | Bulk delete projects |
+| API Route | /api/ai/tasks/extract/route.ts | AI task extraction |
+| API Route | /api/ai/tasks/suggest-next-steps/route.ts | AI next steps |
+| Lib | src/lib/sitefolio/sync.ts | Full SF sync engine |
+| Lib | src/lib/sitefolio/parsers/index.ts | Parsers barrel export |
+| Lib | src/lib/sitefolio/parsers/overview.ts | SF overview parser |
+| Lib | src/lib/sitefolio/parsers/schedule.ts | SF schedule parser |
+| Lib | src/lib/sitefolio/parsers/projects-list.ts | SF projects list parser |
+| Lib | src/lib/firebase/sessions.ts | User session tracking |
+| Type | src/types/task.ts | Task types |
+| Type | src/types/sitefolio.ts | SiteFolio integration types |
+| Type | src/types/session.ts | User session types |
+| Type | src/types/dashboard.ts | Dashboard types (PortfolioAiCache) |

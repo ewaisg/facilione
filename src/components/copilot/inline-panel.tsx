@@ -18,8 +18,13 @@ import {
   Loader2,
   X,
   ExternalLink,
+  ListChecks,
+  ShieldCheck,
+  BarChart2,
+  Mail,
 } from "lucide-react"
 import Link from "next/link"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface InlinePanelProps {
   projectId: string
@@ -235,7 +240,35 @@ export function CopilotInlinePanel({
       </div>
 
       {/* Input */}
-      <div className="border-t p-2 shrink-0">
+      <div className="border-t p-2 shrink-0 space-y-1.5">
+        {messages.length === 0 && !streaming && (
+          <TooltipProvider delayDuration={300}>
+            <div className="flex items-center gap-1 mb-1.5">
+              {[
+                { icon: ListChecks, label: "Next Actions", prompt: "What are the next actions I should take for this project based on the SOP?" },
+                { icon: ShieldCheck, label: "Gate Check", prompt: "Am I ready to pass the next gate? What requirements are still missing?" },
+                { icon: BarChart2, label: "Budget Analysis", prompt: "Analyze the budget variance on this project and flag any concerns." },
+                { icon: Mail, label: "Draft Update", prompt: "Draft a brief status update communication for stakeholders on this project." },
+              ].map(({ icon: Icon, label, prompt }) => (
+                <Tooltip key={label}>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="flex items-center gap-1 px-2 py-1 rounded-md border bg-muted/50 hover:bg-muted hover:border-brand-300 text-muted-foreground hover:text-foreground transition-all text-[10px] font-medium"
+                      onClick={() => setInput(prompt)}
+                      disabled={streaming}
+                    >
+                      <Icon className="size-3 shrink-0" />
+                      <span className="hidden sm:inline">{label}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-[10px]">
+                    {label}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        )}
         <div className="flex items-end gap-1.5">
           <Textarea
             value={input}

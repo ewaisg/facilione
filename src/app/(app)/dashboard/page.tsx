@@ -4,15 +4,31 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/firebase/auth-context"
 import { getLatestProjectWeeklyUpdate, subscribeToProjects, getPortfolioAiCache, savePortfolioAiCache } from "@/lib/firebase/firestore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
   FolderKanban, DollarSign, CalendarClock, CheckSquare,
   ArrowRight, AlertTriangle, Sparkles, Loader2,
-  BarChart3, TrendingUp, Grid3X3, PieChart, HeartPulse, ShieldCheck, RefreshCw,
+  BarChart3, PieChart, HeartPulse, ShieldCheck, RefreshCw, CalendarDays,
 } from "lucide-react"
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  PieChart as RechartsPieChart, Pie,
+} from "recharts"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { PROJECT_TYPE_LABELS } from "@/constants/project-types"
 import type { Project, ProjectWeeklyUpdate } from "@/types"
+import type { ProjectType } from "@/types/project"
+
+const TYPE_COLORS: Record<ProjectType, string> = {
+  NS: "#3b82f6",
+  ER: "#a855f7",
+  WIW: "#14b8a6",
+  FC: "#f59e0b",
+  MC: "#64748b",
+  "F&D": "#f43f5e",
+}
 
 function StatCard({
   label, value, sub, icon: Icon, accent
@@ -367,61 +383,162 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Visual Charts — placeholder section */}
+      {/* Visual Analytics */}
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-3">Visual Analytics</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Chart 1: Projects by Type */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <BarChart3 className="size-4 text-primary" />
-                Budget by Project Type
+                Projects by Type
               </CardTitle>
-              <CardDescription>Column chart of budget allocation across project types</CardDescription>
+              <CardDescription>Active project count per type</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center h-40 rounded-md border border-dashed bg-muted/30">
-                <div className="text-center">
-                  <BarChart3 className="size-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground">Coming soon</p>
+              {dataLoading ? (
+                <div className="h-[180px] flex items-center justify-center">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
-              </div>
+              ) : activeProjects.length === 0 ? (
+                <div className="h-[180px] flex items-center justify-center">
+                  <p className="text-xs text-muted-foreground">No active projects</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={(["NS","ER","WIW","FC","MC","F&D"] as ProjectType[]).map((t) => ({
+                    type: t,
+                    label: PROJECT_TYPE_LABELS[t] ?? t,
+                    count: activeProjects.filter((p) => p.projectType === t).length,
+                  })).filter((d) => d.count > 0)} margin={{ top: 16, right: 4, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="type" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      formatter={(v, _n, p) => [v, (p?.payload as { label?: string })?.label ?? ""]}
+                      contentStyle={{ fontSize: 12, borderRadius: 6 }}
+                    />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 11 }}>
+                      {(["NS","ER","WIW","FC","MC","F&D"] as ProjectType[])
+                        .filter((t) => activeProjects.some((p) => p.projectType === t))
+                        .map((t) => (
+                          <Cell key={t} fill={TYPE_COLORS[t]} />
+                        ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
+          {/* Chart 2: Schedule Health Donut */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <TrendingUp className="size-4 text-emerald-600" />
-                Schedule Trend
+                <PieChart className="size-4 text-rose-500" />
+                Schedule Health
               </CardTitle>
-              <CardDescription>Line chart of milestone completion rate over time</CardDescription>
+              <CardDescription>Active projects by health status</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center h-40 rounded-md border border-dashed bg-muted/30">
-                <div className="text-center">
-                  <TrendingUp className="size-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground">Coming soon</p>
+              {dataLoading ? (
+                <div className="h-[180px] flex items-center justify-center">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
-              </div>
+              ) : activeProjects.length === 0 ? (
+                <div className="h-[180px] flex items-center justify-center">
+                  <p className="text-xs text-muted-foreground">No active projects</p>
+                </div>
+              ) : (() => {
+                const donutData = [
+                  { name: "On Track", value: healthyScheduleCount, color: "#22c55e" },
+                  { name: "At Risk", value: yellowScheduleCount, color: "#eab308" },
+                  { name: "Critical", value: redScheduleCount, color: "#ef4444" },
+                ].filter((d) => d.value > 0)
+                return (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="relative">
+                      <RechartsPieChart width={140} height={140}>
+                        <Pie data={donutData} cx={65} cy={65} innerRadius={42} outerRadius={62} dataKey="value" strokeWidth={2}>
+                          {donutData.map((d) => <Cell key={d.name} fill={d.color} />)}
+                        </Pie>
+                      </RechartsPieChart>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-lg font-bold text-foreground">{activeProjects.length}</span>
+                        <span className="text-[10px] text-muted-foreground">Projects</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 text-xs">
+                      {donutData.map((d) => (
+                        <div key={d.name} className="flex items-center gap-1">
+                          <span className="size-2 rounded-full inline-block" style={{ backgroundColor: d.color }} />
+                          <span className="text-muted-foreground">{d.name} ({d.value})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
 
+          {/* Chart 3: Upcoming GO Dates */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Grid3X3 className="size-4 text-amber-500" />
-                Portfolio Health Heat Map
+                <CalendarDays className="size-4 text-amber-500" />
+                Upcoming GO Dates
               </CardTitle>
-              <CardDescription>Heat map of risk and status across active projects</CardDescription>
+              <CardDescription>Next 5 grand openings</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center h-40 rounded-md border border-dashed bg-muted/30">
-                <div className="text-center">
-                  <Grid3X3 className="size-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground">Coming soon</p>
+              {dataLoading ? (
+                <div className="h-[180px] flex items-center justify-center">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
-              </div>
+              ) : (() => {
+                const now = Date.now()
+                const cutoff = now - 30 * 24 * 60 * 60 * 1000
+                const upcoming = activeProjects
+                  .filter((p) => p.grandOpeningDate && new Date(p.grandOpeningDate).getTime() > cutoff)
+                  .sort((a, b) => new Date(a.grandOpeningDate!).getTime() - new Date(b.grandOpeningDate!).getTime())
+                  .slice(0, 5)
+                if (upcoming.length === 0) {
+                  return (
+                    <div className="h-[180px] flex items-center justify-center">
+                      <p className="text-xs text-muted-foreground">No upcoming GO dates</p>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="space-y-2">
+                    {upcoming.map((p) => {
+                      const msLeft = new Date(p.grandOpeningDate!).getTime() - now
+                      const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000))
+                      const pillCls = daysLeft < 0
+                        ? "bg-gray-100 text-gray-500 border-gray-200"
+                        : daysLeft <= 30
+                          ? "bg-red-100 text-red-700 border-red-200"
+                          : daysLeft <= 60
+                            ? "bg-amber-100 text-amber-700 border-amber-200"
+                            : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                      return (
+                        <Link key={p.id} href={`/projects/${p.id}`} className="flex items-center justify-between gap-2 text-xs hover:bg-muted/40 rounded p-1 -mx-1 transition-colors">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 shrink-0" style={{ color: TYPE_COLORS[p.projectType as ProjectType], borderColor: TYPE_COLORS[p.projectType as ProjectType] }}>
+                              {p.projectType}
+                            </Badge>
+                            <span className="truncate text-foreground font-medium">{p.storeNumber} {p.storeName}</span>
+                          </div>
+                          <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded border shrink-0", pillCls)}>
+                            {daysLeft < 0 ? `${Math.abs(daysLeft)}d ago` : `${daysLeft}d`}
+                          </span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
         </div>

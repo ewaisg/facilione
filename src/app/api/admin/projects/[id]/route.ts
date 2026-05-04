@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebase-admin"
+import { requireRoles } from "@/lib/firebase-admin/request-auth"
 
 /**
  * PATCH /api/admin/projects/[id]
@@ -10,6 +11,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const { id } = await params
     const body = await req.json()
 
@@ -43,10 +47,13 @@ export async function PATCH(
  * Delete project and all sub-collections
  */
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const { id } = await params
 
     // Delete sub-collections first (phases)

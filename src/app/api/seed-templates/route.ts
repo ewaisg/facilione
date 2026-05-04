@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebase-admin"
+import { requireRoles } from "@/lib/firebase-admin/request-auth"
 import templates from "@/lib/schedule/templates.json"
 
 /**
@@ -9,8 +10,11 @@ import templates from "@/lib/schedule/templates.json"
  * Run once after initial deploy to populate the Knowledge Base.
  * Idempotent — overwrites existing documents.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const batch = adminDb.batch()
     let count = 0
 

@@ -2,8 +2,9 @@
  * AI Task Extraction - Extract actionable tasks from text
  */
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { invokeAiText } from "@/lib/ai/client"
+import { requireAppUser } from "@/lib/firebase-admin/request-auth"
 
 interface ExtractTasksRequest {
   content: string
@@ -57,8 +58,11 @@ Return as JSON array with format:
   return prompt
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAppUser(req)
+    if (!auth.ok) return auth.response
+
     const body = (await req.json()) as ExtractTasksRequest
 
     if (!body.content?.trim()) {

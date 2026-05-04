@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebase-admin"
+import { requireRoles } from "@/lib/firebase-admin/request-auth"
 import { SOP_DATA, ALL_SOP_KEYS } from "@/constants/sop-data"
 
 /**
@@ -11,8 +12,11 @@ import { SOP_DATA, ALL_SOP_KEYS } from "@/constants/sop-data"
  * Idempotent — overwrites existing documents.
  * Run once after deploy to populate the Knowledge Base.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const batch = adminDb.batch()
     let count = 0
 

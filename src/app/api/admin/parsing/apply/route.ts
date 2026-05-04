@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebase-admin"
+import { requireRoles } from "@/lib/firebase-admin/request-auth"
 
 type ParserType = "overview" | "schedule" | "files-reports"
 
@@ -60,6 +61,9 @@ function parseAddress(address: string): {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireRoles(req, ["admin"])
+    if (!auth.ok) return auth.response
+
     const body = (await req.json()) as ApplyPayload
 
     if (!body.projectId || !body.parserType) {
