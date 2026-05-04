@@ -11,7 +11,7 @@ import {
   ArrowLeft, CalendarDays, DollarSign,
   GanttChartSquare, Wallet, ClipboardList,
   CheckSquare, BarChart3, Loader2, Sparkles,
-  Bot
+  Bot, LayoutDashboard, Users
 } from "lucide-react"
 import { getHealthColor, getHealthLabel, getProjectTypeColor, formatCurrency, formatDate } from "@/lib/utils"
 import { getProject, subscribeToPhases, updateMilestoneDate, updateProject } from "@/lib/firebase/firestore"
@@ -29,6 +29,8 @@ import { AiWeeklyStatus } from "@/components/reports/ai-weekly-status"
 import { AiScheduleStatus } from "@/components/reports/ai-schedule-status"
 import { SfSyncedSchedule } from "@/components/sitefolio/sf-synced-schedule"
 import { SfOverviewPanel } from "@/components/sitefolio/sf-overview-panel"
+import { SfOverviewTab } from "@/components/sitefolio/sf-overview-tab"
+import { SfTeamTab } from "@/components/sitefolio/sf-team-tab"
 
 function PlaceholderTab({ label, icon: Icon, note }: { label: string; icon: React.ElementType; note?: string }) {
   return (
@@ -101,11 +103,13 @@ export default function ProjectDetailPage() {
     if (!requestedTab) return
 
     const allowedTabs = [
+      "overview",
       "schedule",
       "budget",
       "forms",
       "tasks",
       "reports",
+      "team",
     ]
 
     if (allowedTabs.includes(requestedTab)) {
@@ -209,11 +213,17 @@ export default function ProjectDetailPage() {
           <div className="border-b bg-background px-6">
             <TabsList className="h-10 bg-transparent gap-0 rounded-none p-0 max-w-7xl mx-auto w-full justify-start">
               {[
+                ...(project.sfProjectId
+                  ? [{ value: "overview", label: "Overview", icon: LayoutDashboard }]
+                  : []),
                 { value: "schedule", label: "Schedule", icon: GanttChartSquare },
                 { value: "budget", label: "Budget", icon: Wallet },
                 { value: "forms", label: "Forms", icon: ClipboardList },
                 { value: "tasks", label: "Tasks", icon: CheckSquare },
                 { value: "reports", label: "Reports", icon: BarChart3 },
+                ...(project.sfProjectId
+                  ? [{ value: "team", label: "Team", icon: Users }]
+                  : []),
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -228,9 +238,16 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {/* Schedule Tab — now includes both Gantt and SiteFolio Schedule */}
+            {/* Overview Tab — SiteFolio full overview (only shown for linked projects) */}
+            {project.sfProjectId && (
+              <TabsContent value="overview" className="mt-0">
+                <SfOverviewTab projectId={id} />
+              </TabsContent>
+            )}
+
+            {/* Schedule Tab */}
             <TabsContent value="schedule" className="p-6 max-w-7xl mx-auto mt-0 space-y-6">
-              {/* SiteFolio Overview Panel */}
+              {/* Compact SiteFolio Overview Panel — remains in Schedule for quick context */}
               {project.sfProjectId && (
                 <SfOverviewPanel projectId={id} />
               )}
@@ -363,6 +380,13 @@ export default function ProjectDetailPage() {
                 <AiScheduleStatus project={project} phases={phases} />
               </div>
             </TabsContent>
+
+            {/* Team Tab — SiteFolio full team directory (only shown for linked projects) */}
+            {project.sfProjectId && (
+              <TabsContent value="team" className="mt-0">
+                <SfTeamTab projectId={id} />
+              </TabsContent>
+            )}
           </div>
         </Tabs>
       </div>
