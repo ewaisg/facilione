@@ -1,76 +1,116 @@
 /**
- * Task Management Types
- *
- * Task projects can be standalone OR linked to real projects.
- * Supports flexible sections (task checklists or freeform notes).
+ * Task Management Types (v2 — flat task structure)
  */
 
-export type TaskStatus = "DO NOW" | "IN PROGRESS" | "PENDING" | "DONE" | "ONGOING"
+export type TaskStatus = "DO NOW" | "IN PROGRESS" | "WAITING" | "PENDING" | "BLOCKED" | "DONE" | "ONGOING"
+
+export type TaskPriority = "urgent" | "high" | "medium" | "low"
 
 export type TaskPriorityLevel = "highest" | "high" | "active" | "lower"
 
-export type TaskSectionType = "tasks" | "notes"
+export type TaskFilter = "open" | "all" | "do-now" | "waiting" | "blocked" | "done"
 
-/**
- * Task Project - Main container for tasks
- * Can be standalone (e.g., "Daily Responsibilities") or linked to a real project
- */
+export type ProjectInfoFieldType = "text" | "long-note" | "date" | "number" | "currency" | "boolean" | "link"
+
+export const TASK_PRIORITY_SORT: Record<TaskPriority, number> = {
+  urgent: 1,
+  high: 2,
+  medium: 3,
+  low: 4,
+}
+
+export const DEFAULT_PROJECT_INFO_FIELDS: Array<{ key: string; label: string; type: ProjectInfoFieldType }> = [
+  { key: "bidStartDate", label: "Bid Start Date", type: "date" },
+  { key: "bidDueDate", label: "Bid Due Date", type: "date" },
+  { key: "preBidDate", label: "Pre-Bid Date", type: "date" },
+  { key: "round1BidsReview", label: "Round 1 Bids Review", type: "date" },
+  { key: "round2BidsReview", label: "Round 2 Bids Review", type: "date" },
+  { key: "f1PlanStatus", label: "F1 Plan Status", type: "text" },
+  { key: "f1PlanDate", label: "F1 Plan Date", type: "date" },
+  { key: "r1PlanStatus", label: "R1 Plan Status", type: "text" },
+  { key: "r1PlanDate", label: "R1 Plan Date", type: "date" },
+  { key: "cdsStatus", label: "CDs Status", type: "text" },
+  { key: "cdsDate", label: "CDs Date", type: "date" },
+  { key: "permitStatus", label: "Permit Status", type: "text" },
+  { key: "permitDate", label: "Permit Date", type: "date" },
+  { key: "caFundingStatus", label: "CA/Funding Status", type: "text" },
+  { key: "directBuyStatus", label: "Direct Buy Status", type: "text" },
+  { key: "constructionStartDate", label: "Construction Start", type: "date" },
+  { key: "constructionEndDate", label: "Construction End", type: "date" },
+]
+
 export interface TaskProject {
   id: string
-  code: string                      // User-entered project code, e.g. "KS-12"
+  code: string
   linkedProjectId?: string
-  name: string                      // "Remodel" or "Daily Tasks"
-  priority: string                  // Display text: "HIGHEST PRIORITY", "ACTIVE", etc.
-  priorityLevel: TaskPriorityLevel  // For color coding
-  status: string                    // Freeform status text
-  gcInfo?: string                   // GC or extra context
+  name: string
+  priority: string
+  priorityLevel: TaskPriorityLevel
+  status: string
+  gcInfo?: string
   orgId: string
   createdBy: string
+  notes?: string
+  projectInfo?: Record<string, {
+    label: string
+    type: ProjectInfoFieldType
+    value: string | number | boolean | null
+  }>
+  migrated?: boolean
   createdAt: string
   updatedAt: string
 }
 
-/**
- * Task Section - Groups tasks or holds freeform notes
- */
-export interface TaskSection {
-  id: string
-  projectId: string                 // Parent taskProject
-  label: string                     // "IMMEDIATE / DO NOW", "PENDING", "NOTES"
-  type: TaskSectionType             // "tasks" or "notes"
-  sortOrder: number
-  notesContent?: string             // If type === "notes"
-  createdAt: string
-  updatedAt: string
-}
-
-/**
- * Individual Task
- */
 export interface Task {
   id: string
-  sectionId: string
   projectId: string
-  text: string                      // Task description
+  text: string
   status: TaskStatus
-  notes: string                     // Detailed notes / next step
-  checked: boolean                  // Completion checkbox
+  priority: TaskPriority
+  notes: string
+  checked: boolean
   sortOrder: number
-  assignedTo?: string               // userId (optional)
-  dueDate?: string                  // ISO date (optional)
-  sopReference?: {                  // Link to SOP step (optional)
-    projectType: string
-    phase: number
-    stepId?: string
-    gateId?: string
-  }
+  assignedTo?: string
+  dueDate?: string
   createdAt: string
   updatedAt: string
 }
 
-/**
- * Next Step - Ordered list of upcoming actions
- */
+export interface CustomFieldDefinition {
+  id: string
+  projectId: string
+  label: string
+  type: ProjectInfoFieldType
+  value: string | number | boolean | null
+  sortOrder: number
+  pinned: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskSnapshot {
+  id: string
+  projectId: string
+  date: string
+  tasks: Task[]
+  projectNotes: string
+  createdAt: string
+}
+
+// Legacy types kept for backward compatibility
+export type TaskSectionType = "tasks" | "notes"
+
+export interface TaskSection {
+  id: string
+  projectId: string
+  label: string
+  type: TaskSectionType
+  sortOrder: number
+  notesContent?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface NextStep {
   id: string
   projectId: string

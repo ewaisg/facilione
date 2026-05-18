@@ -21,6 +21,7 @@ import { cn, getInitials } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/firebase/auth-context"
+import { useBranding } from "@/lib/hooks/use-branding"
 import { canSeeNavItem } from "@/lib/access-control"
 import type { UserRole } from "@/types"
 
@@ -60,6 +61,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const { user } = useAuth()
+  const { logoUrl } = useBranding()
   const visibleNavItems = NAV_ITEMS.filter((item) => canSeeNavItem(user?.role, item.allowedRoles))
 
   return (
@@ -71,9 +73,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className={cn("flex items-center gap-3 px-4 border-b border-white/10 shrink-0", "h-14")}>
-        <div className="flex items-center justify-center size-8 rounded-lg bg-white/10 shrink-0">
-          <Building2 className="size-4 text-white" />
-        </div>
+        {logoUrl ? (
+          <img src={logoUrl} alt="Logo" className="size-8 rounded-lg object-contain shrink-0" />
+        ) : (
+          <div className="flex items-center justify-center size-8 rounded-lg bg-white/10 shrink-0">
+            <Building2 className="size-4 text-white" />
+          </div>
+        )}
         {!collapsed && (
           <span className="font-bold text-base tracking-tight whitespace-nowrap overflow-hidden">
             FaciliOne

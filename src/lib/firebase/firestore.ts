@@ -789,3 +789,227 @@ export async function deleteNextStep(
 
   await batch.commit()
 }
+
+// ═══════════════════════════════════════════════════════════════
+// FLAT TASKS (v2 — tasks directly under project, no sections)
+// ═══════════════════════════════════════════════════════════════
+
+export function subscribeToProjectTasks(
+  projectId: string,
+  onData: (tasks: import("@/types").Task[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  const tasksRef = collection(db, "taskProjects", projectId, "tasks")
+  const q = query(tasksRef, orderBy("sortOrder"))
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const tasks = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as import("@/types").Task)
+      onData(tasks)
+    },
+    onError,
+  )
+}
+
+export async function createProjectTask(
+  projectId: string,
+  taskData: Omit<import("@/types").Task, "id" | "projectId" | "createdAt" | "updatedAt">,
+): Promise<string> {
+  const taskRef = doc(collection(db, "taskProjects", projectId, "tasks"))
+  const now = new Date().toISOString()
+
+  await setDoc(taskRef, {
+    ...taskData,
+    projectId,
+    createdAt: now,
+    updatedAt: now,
+  })
+
+  await updateDoc(doc(db, "taskProjects", projectId), { updatedAt: now })
+  return taskRef.id
+}
+
+export async function updateProjectTask(
+  projectId: string,
+  taskId: string,
+  updates: Partial<Omit<import("@/types").Task, "id" | "projectId" | "createdAt">>,
+): Promise<void> {
+  const now = new Date().toISOString()
+  await updateDoc(doc(db, "taskProjects", projectId, "tasks", taskId), {
+    ...updates,
+    updatedAt: now,
+  })
+  await updateDoc(doc(db, "taskProjects", projectId), { updatedAt: now })
+}
+
+export async function deleteProjectTask(
+  projectId: string,
+  taskId: string,
+): Promise<void> {
+  const batch = writeBatch(db)
+  const now = new Date().toISOString()
+  batch.delete(doc(db, "taskProjects", projectId, "tasks", taskId))
+  batch.update(doc(db, "taskProjects", projectId), { updatedAt: now })
+  await batch.commit()
+}
+
+// ─── Custom Fields ────────────────────────────────────────────
+
+export function subscribeToCustomFields(
+  projectId: string,
+  onData: (fields: import("@/types").CustomFieldDefinition[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  const fieldsRef = collection(db, "taskProjects", projectId, "customFields")
+  const q = query(fieldsRef, orderBy("sortOrder"))
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const fields = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as import("@/types").CustomFieldDefinition)
+      onData(fields)
+    },
+    onError,
+  )
+}
+
+export async function createCustomField(
+  projectId: string,
+  fieldData: Omit<import("@/types").CustomFieldDefinition, "id" | "projectId" | "createdAt" | "updatedAt">,
+): Promise<string> {
+  const fieldRef = doc(collection(db, "taskProjects", projectId, "customFields"))
+  const now = new Date().toISOString()
+
+  await setDoc(fieldRef, {
+    ...fieldData,
+    projectId,
+    createdAt: now,
+    updatedAt: now,
+  })
+  return fieldRef.id
+}
+
+export async function updateCustomField(
+  projectId: string,
+  fieldId: string,
+  updates: Partial<Omit<import("@/types").CustomFieldDefinition, "id" | "projectId" | "createdAt">>,
+): Promise<void> {
+  await updateDoc(doc(db, "taskProjects", projectId, "customFields", fieldId), {
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+export async function deleteCustomField(
+  projectId: string,
+  fieldId: string,
+): Promise<void> {
+  await updateDoc(doc(db, "taskProjects", projectId), { updatedAt: new Date().toISOString() })
+  const ref = doc(db, "taskProjects", projectId, "customFields", fieldId)
+  const batch = writeBatch(db)
+  batch.delete(ref)
+  await batch.commit()
+}
+
+// ─── Project Notes & Info ─────────────────────────────────────
+
+export async function updateProjectNotes(
+  projectId: string,
+  notes: string,
+): Promise<void> {
+  await updateDoc(doc(db, "taskProjects", projectId), {
+    notes,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+export async function updateProjectInfo(
+  projectId: string,
+  projectInfo: Record<string, { label: string; type: import("@/types").ProjectInfoFieldType; value: string | number | boolean | null }>,
+): Promise<void> {
+  await updateDoc(doc(db, "taskProjects", projectId), {
+    projectInfo,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+// ─── History / Snapshots ──────────────────────────────────────
+
+export async function createTaskSnapshot(
+  projectId: string,
+  date: string,
+  tasks: import("@/types").Task[],
+  projectNotes: string,
+): Promise<void> {
+  const ref = doc(db, "taskProjects", projectId, "history", date)
+  await setDoc(ref, {
+    projectId,
+    date,
+    tasks,
+    projectNotes,
+    createdAt: new Date().toISOString(),
+  })
+}
+
+export async function getTaskSnapshot(
+  projectId: string,
+  date: string,
+): Promise<import("@/types").TaskSnapshot | null> {
+  const snap = await getDoc(doc(db, "taskProjects", projectId, "history", date))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as import("@/types").TaskSnapshot
+}
+
+export async function getAvailableSnapshotDates(
+  projectId: string,
+): Promise<string[]> {
+  const historyRef = collection(db, "taskProjects", projectId, "history")
+  const q = query(historyRef, orderBy("date", "desc"), limit(90))
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => d.id)
+}
+
+// ─── Migration (sections → flat) ─────────────────────────────
+
+export async function migrateProjectToFlatTasks(projectId: string): Promise<void> {
+  const sectionsRef = collection(db, "taskProjects", projectId, "sections")
+  const sectionsSnap = await getDocs(query(sectionsRef, orderBy("sortOrder")))
+
+  const batch = writeBatch(db)
+  let globalSort = 0
+
+  for (const secDoc of sectionsSnap.docs) {
+    const secData = secDoc.data()
+    if (secData.type !== "tasks") continue
+
+    const tasksSnap = await getDocs(
+      query(collection(db, "taskProjects", projectId, "sections", secDoc.id, "tasks"), orderBy("sortOrder")),
+    )
+
+    for (const taskDoc of tasksSnap.docs) {
+      const t = taskDoc.data()
+      const flatRef = doc(collection(db, "taskProjects", projectId, "tasks"))
+      batch.set(flatRef, {
+        projectId,
+        text: t.text || "",
+        status: t.status || "PENDING",
+        priority: "medium",
+        notes: t.notes || "",
+        checked: Boolean(t.checked),
+        sortOrder: globalSort++,
+        assignedTo: t.assignedTo || null,
+        dueDate: t.dueDate || null,
+        createdAt: t.createdAt || new Date().toISOString(),
+        updatedAt: t.updatedAt || new Date().toISOString(),
+      })
+    }
+  }
+
+  batch.update(doc(db, "taskProjects", projectId), {
+    migrated: true,
+    updatedAt: new Date().toISOString(),
+  })
+
+  await batch.commit()
+}

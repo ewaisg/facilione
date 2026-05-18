@@ -1,9 +1,31 @@
-/**
- * Task Status Badge - Clickable badge that cycles through statuses
- */
+"use client"
 
 import { cn } from "@/lib/utils"
 import type { TaskStatus } from "@/types"
+
+const STATUS_COLORS: Record<TaskStatus, string> = {
+  "DO NOW": "bg-red-50 text-red-700 border-red-200",
+  "IN PROGRESS": "bg-yellow-50 text-yellow-700 border-yellow-200",
+  "WAITING": "bg-purple-50 text-purple-700 border-purple-200",
+  "PENDING": "bg-gray-100 text-gray-600 border-gray-300",
+  "BLOCKED": "bg-orange-50 text-orange-700 border-orange-200",
+  "DONE": "bg-green-50 text-green-700 border-green-200",
+  "ONGOING": "bg-blue-50 text-blue-700 border-blue-200",
+}
+
+const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
+  "DO NOW": "IN PROGRESS",
+  "IN PROGRESS": "WAITING",
+  "WAITING": "PENDING",
+  "PENDING": "BLOCKED",
+  "BLOCKED": "DONE",
+  "DONE": "DO NOW",
+  "ONGOING": "ONGOING",
+}
+
+export function getNextStatus(current: TaskStatus): TaskStatus {
+  return STATUS_CYCLE[current] || "PENDING"
+}
 
 interface TaskStatusBadgeProps {
   status: TaskStatus
@@ -11,43 +33,20 @@ interface TaskStatusBadgeProps {
   disabled?: boolean
 }
 
-const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
-  "DO NOW": "IN PROGRESS",
-  "IN PROGRESS": "PENDING",
-  "PENDING": "DONE",
-  "DONE": "DO NOW",
-  "ONGOING": "ONGOING", // Stays ongoing
-}
-
-const STATUS_COLORS: Record<TaskStatus, string> = {
-  "DO NOW": "bg-red-50 text-red-700 border-red-200",
-  "IN PROGRESS": "bg-yellow-50 text-yellow-700 border-yellow-200",
-  "PENDING": "bg-gray-100 text-gray-600 border-gray-300",
-  "DONE": "bg-green-50 text-green-700 border-green-200",
-  "ONGOING": "bg-blue-50 text-blue-700 border-blue-200",
-}
-
 export function TaskStatusBadge({ status, onClick, disabled }: TaskStatusBadgeProps) {
-  const colorClass = STATUS_COLORS[status]
-
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors",
-        colorClass,
-        onClick && !disabled && "cursor-pointer hover:opacity-75",
-        disabled && "cursor-not-allowed opacity-50",
+        "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap",
+        "transition-colors select-none",
+        STATUS_COLORS[status] || STATUS_COLORS["PENDING"],
+        onClick && !disabled ? "cursor-pointer hover:opacity-80" : "cursor-default",
       )}
-      title={onClick ? "Click to change status" : undefined}
     >
       {status}
     </button>
   )
-}
-
-export function getNextStatus(current: TaskStatus): TaskStatus {
-  return STATUS_CYCLE[current]
 }

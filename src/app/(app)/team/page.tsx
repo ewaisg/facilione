@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { useAuth } from "@/lib/firebase/auth-context"
+import { authedFetch } from "@/lib/firebase/authed-fetch"
 import { subscribeToProjects } from "@/lib/firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -70,7 +71,7 @@ export default function TeamPage() {
   const loadMembers = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/users/list")
+      const res = await authedFetch("/api/team/list")
       const data = await res.json()
       if (!res.ok) {
         throw new Error(data?.error || "Failed to load team members")

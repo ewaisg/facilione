@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
+import { authedFetch } from "@/lib/firebase/authed-fetch"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,7 +18,7 @@ import {
 import {
   ShieldCheck, UserPlus, Loader2, Copy, Check, AlertTriangle,
   Users, FolderKanban, Trash2, Pencil, RefreshCw,
-  CheckCircle2, XCircle, Bot, Globe, Download, Search,
+  CheckCircle2, XCircle, Bot, Globe, Download, Search, ImageIcon, Upload,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -120,7 +121,7 @@ interface AdminAiConfig {
   }
 }
 
-const ADMIN_TABS = new Set(["users", "projects", "ai-setup", "sitefolio"])
+const ADMIN_TABS = new Set(["users", "projects", "ai-setup", "sitefolio", "branding"])
 
 function EstimateLoaderTab() {
   const [projectId, setProjectId] = useState("")
@@ -134,7 +135,7 @@ function EstimateLoaderTab() {
     }
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/estimates?projectId=${encodeURIComponent(projectId.trim())}`)
+      const res = await authedFetch(`/api/admin/estimates?projectId=${encodeURIComponent(projectId.trim())}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Failed to load estimates")
       setEstimates((data.estimates || []) as EstimateRecord[])
@@ -209,7 +210,7 @@ export default function AdminPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users" className="gap-1.5 text-xs">
             <Users className="size-3.5" /> Users
           </TabsTrigger>
@@ -222,12 +223,16 @@ export default function AdminPage() {
           <TabsTrigger value="sitefolio" className="gap-1.5 text-xs">
             <Globe className="size-3.5" /> SiteFolio
           </TabsTrigger>
+          <TabsTrigger value="branding" className="gap-1.5 text-xs">
+            <ImageIcon className="size-3.5" /> Branding
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="projects"><ProjectsTab /><EstimateLoaderTab /></TabsContent>
         <TabsContent value="ai-setup"><AiSetupTab /></TabsContent>
         <TabsContent value="sitefolio"><SiteFolioTab /></TabsContent>
+        <TabsContent value="branding"><BrandingTab /></TabsContent>
       </Tabs>
     </div>
   )
@@ -261,7 +266,7 @@ function UsersTab() {
   const loadUsers = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/users/list")
+      const res = await authedFetch("/api/admin/users/list")
       const data = await res.json()
       if (!res.ok) {
         throw new Error(data?.error || "Failed to load users")
@@ -283,7 +288,7 @@ function UsersTab() {
     setCreating(true)
     setCreatedUser(null)
     try {
-      const res = await fetch("/api/admin/users", {
+      const res = await authedFetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ displayName: displayName.trim(), email: email.trim(), role }),
@@ -305,7 +310,7 @@ function UsersTab() {
     if (!editUser) return
     setEditSaving(true)
     try {
-      const res = await fetch(`/api/admin/users/${editUser.uid}`, {
+      const res = await authedFetch(`/api/admin/users/${editUser.uid}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: editRole, displayName: editName }),
@@ -325,7 +330,7 @@ function UsersTab() {
     if (!deleteUser) return
     setDeleting(true)
     try {
-      const res = await fetch(`/api/admin/users/${deleteUser.uid}`, { method: "DELETE" })
+      const res = await authedFetch(`/api/admin/users/${deleteUser.uid}`, { method: "DELETE" })
       if (!res.ok) { toast.error("Failed to delete user"); return }
       toast.success("User deleted")
       setDeleteUser(null)
@@ -570,7 +575,7 @@ function ProjectsTab() {
   const loadProjects = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/projects/list")
+      const res = await authedFetch("/api/admin/projects/list")
       const data = await res.json()
       setProjects(data.projects || [])
     } catch {
@@ -593,7 +598,7 @@ function ProjectsTab() {
       if (body.totalBudget) body.totalBudget = Number(body.totalBudget)
       if (body.grandOpeningDate === "") body.grandOpeningDate = null
 
-      const res = await fetch("/api/admin/projects/create", {
+      const res = await authedFetch("/api/admin/projects/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -615,7 +620,7 @@ function ProjectsTab() {
     if (!deleteProject) return
     setDeleting(true)
     try {
-      const res = await fetch(`/api/admin/projects/${deleteProject.id}`, { method: "DELETE" })
+      const res = await authedFetch(`/api/admin/projects/${deleteProject.id}`, { method: "DELETE" })
       if (!res.ok) { toast.error("Failed to delete project"); return }
       toast.success(`Deleted: ${deleteProject.storeNumber}`)
       setDeleteProject(null)
@@ -648,7 +653,7 @@ function ProjectsTab() {
     if (selected.size === 0) return
     setBulkDeleting(true)
     try {
-      const res = await fetch("/api/admin/projects/bulk-delete", {
+      const res = await authedFetch("/api/admin/projects/bulk-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected) }),
@@ -691,7 +696,7 @@ function ProjectsTab() {
       if (body.totalBudget) body.totalBudget = Number(body.totalBudget)
       if (body.grandOpeningDate === "") body.grandOpeningDate = null
 
-      const res = await fetch(`/api/admin/projects/${editProject.id}`, {
+      const res = await authedFetch(`/api/admin/projects/${editProject.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -994,7 +999,7 @@ function AiSetupTab() {
   const loadAiConfig = useCallback(async () => {
     setAiLoading(true)
     try {
-      const res = await fetch("/api/admin/ai/config")
+      const res = await authedFetch("/api/admin/ai/config")
       const data = await res.json()
       if (!res.ok) {
         throw new Error(data?.error || "Failed to load AI configuration")
@@ -1044,7 +1049,7 @@ function AiSetupTab() {
         agents: aiConfig.agents,
       }
 
-      const res = await fetch("/api/admin/ai/config", {
+      const res = await authedFetch("/api/admin/ai/config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1106,7 +1111,7 @@ function AiSetupTab() {
     if (!modelKey) return
     setTestingModelKey(modelKey)
     try {
-      const res = await fetch("/api/admin/ai/test", {
+      const res = await authedFetch("/api/admin/ai/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ modelKey }),
@@ -1215,7 +1220,7 @@ function AiSetupTab() {
         agents: aiConfig.agents,
       }
 
-      const saveRes = await fetch("/api/admin/ai/config", {
+      const saveRes = await authedFetch("/api/admin/ai/config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1225,7 +1230,7 @@ function AiSetupTab() {
         throw new Error(saveData?.error || "Failed to save quick completion setup")
       }
 
-      const testRes = await fetch("/api/admin/ai/test", {
+      const testRes = await authedFetch("/api/admin/ai/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ modelKey: quickModelKey }),
@@ -1752,7 +1757,7 @@ function SiteFolioTab() {
   const loadSessionStatus = useCallback(async () => {
     setSessionLoading(true)
     try {
-      const res = await fetch("/api/sitefolio/auth")
+      const res = await authedFetch("/api/sitefolio/auth")
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Failed to load session status")
       setSessionStatus(data)
@@ -1772,7 +1777,7 @@ function SiteFolioTab() {
   const loadSyncStatus = useCallback(async () => {
     setSyncLoading(true)
     try {
-      const res = await fetch("/api/sitefolio/sync/status")
+      const res = await authedFetch("/api/sitefolio/sync/status")
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Failed to load sync status")
       setSyncStatus(data)
@@ -1798,7 +1803,7 @@ function SiteFolioTab() {
       const params = new URLSearchParams()
       if (importContactId) params.set("contactId", importContactId)
       if (importBusinessId) params.set("businessId", importBusinessId)
-      const res = await fetch(`/api/sitefolio/import/preview?${params.toString()}`)
+      const res = await authedFetch(`/api/sitefolio/import/preview?${params.toString()}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Preview failed")
       setPreviewProjects(data.projects)
@@ -1844,7 +1849,7 @@ function SiteFolioTab() {
     setImporting(true)
     setImportResult(null)
     try {
-      const res = await fetch("/api/sitefolio/import", {
+      const res = await authedFetch("/api/sitefolio/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1875,7 +1880,7 @@ function SiteFolioTab() {
     setSyncing(true)
     setSyncResult(null)
     try {
-      const res = await fetch("/api/sitefolio/sync", {
+      const res = await authedFetch("/api/sitefolio/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1900,7 +1905,7 @@ function SiteFolioTab() {
   const handleSyncProject = async (projectId: string) => {
     setSyncingProjectId(projectId)
     try {
-      const res = await fetch("/api/sitefolio/sync", {
+      const res = await authedFetch("/api/sitefolio/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId }),
@@ -2290,6 +2295,167 @@ function SiteFolioTab() {
                 </div>
               ))}
             </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════
+// BRANDING TAB
+// ══════════════════════════════════════════════
+function BrandingTab() {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const loadBranding = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await authedFetch("/api/admin/branding")
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Failed to load branding")
+      setLogoUrl(data.logoUrl || null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load branding")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadBranding() }, [loadBranding])
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size must be under 2MB")
+      return
+    }
+
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml", "image/webp"]
+    if (!allowed.includes(file.type)) {
+      toast.error("Only PNG, JPG, SVG, and WebP files are allowed")
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("logo", file)
+      const res = await authedFetch("/api/admin/branding", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Upload failed")
+      setLogoUrl(data.logoUrl)
+      toast.success("Logo uploaded successfully")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload logo")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Remove the current logo? The app will revert to the default icon.")) return
+    setDeleting(true)
+    try {
+      const res = await authedFetch("/api/admin/branding", { method: "DELETE" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Delete failed")
+      setLogoUrl(null)
+      toast.success("Logo removed")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove logo")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6 mt-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ImageIcon className="size-4" /> Organization Logo
+          </CardTitle>
+          <CardDescription>
+            Upload a logo to display on the login page and in the app sidebar. Recommended size: 200x200px or larger. Max 2MB.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              {/* Current Logo Preview */}
+              <div className="flex flex-col items-center gap-4 p-6 border rounded-lg bg-muted/30">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Current Logo
+                </p>
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt="Organization logo"
+                    className="max-h-32 max-w-64 object-contain rounded-lg border bg-white p-2"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <div className="size-16 rounded-xl bg-primary flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">F</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">No custom logo set — using default</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload / Remove Actions */}
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  className="hidden"
+                  onChange={handleUpload}
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <><Loader2 className="size-4 animate-spin" /> Uploading...</>
+                  ) : (
+                    <><Upload className="size-4" /> {logoUrl ? "Replace Logo" : "Upload Logo"}</>
+                  )}
+                </Button>
+                {logoUrl && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <><Loader2 className="size-4 animate-spin" /> Removing...</>
+                    ) : (
+                      <><Trash2 className="size-4" /> Remove Logo</>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Supported formats: PNG, JPG, SVG, WebP. The logo will appear on the login page and in the sidebar header.
+              </p>
+            </>
           )}
         </CardContent>
       </Card>
