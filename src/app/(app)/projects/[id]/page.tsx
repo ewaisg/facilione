@@ -15,14 +15,11 @@ import {
 } from "lucide-react"
 import { getHealthColor, getHealthLabel, getProjectTypeColor, formatCurrency, formatDate } from "@/lib/utils"
 import { getProject, subscribeToPhases, updateMilestoneDate, updateProject } from "@/lib/firebase/firestore"
-import { SF_SCHEDULE_TEMPLATES } from "@/constants/sf-schedule-data"
-import { type SfMilestoneState } from "@/lib/schedule/sf-schedule"
 import { IpeccBuilder } from "@/components/reports/ipecc-builder"
 import { ProjectFormsTab } from "@/components/forms/project-forms-tab"
 import { TaskKanbanBoard } from "@/components/tasks/task-kanban-board"
 import type { HealthStatus, ProjectType, Project, Phase } from "@/types"
 import { GanttChart } from "@/components/schedule/gantt-chart"
-import { SfSchedulePanel } from "@/components/schedule/sf-schedule-panel"
 import { toast } from "sonner"
 import { CopilotInlinePanel } from "@/components/copilot/inline-panel"
 import { AiWeeklyStatus } from "@/components/reports/ai-weekly-status"
@@ -152,21 +149,6 @@ export default function ProjectDetailPage() {
     }
   }
 
-  // SiteFolio schedule state — load from project.sfSchedule or initialize from template
-  const sfTemplate = SF_SCHEDULE_TEMPLATES[project.projectType]
-  const savedSfState: SfMilestoneState[] | null =
-    (project as unknown as Record<string, unknown>).sfSchedule as SfMilestoneState[] | null
-
-  const handleSfScheduleUpdate = async (milestones: SfMilestoneState[], grandOpening: string) => {
-    try {
-      await updateProject(id, {
-        sfSchedule: milestones,
-        grandOpeningDate: grandOpening || project.grandOpeningDate,
-      } as Partial<Project>)
-    } catch (err) {
-      console.error("Failed to save schedule:", err)
-    }
-  }
 
   return (
     <div className="flex h-full">
@@ -273,15 +255,6 @@ export default function ProjectDetailPage() {
                 <SfSyncedSchedule projectId={id} />
               )}
 
-              {/* SiteFolio Schedule Panel (template-based) */}
-              {sfTemplate && (
-                <SfSchedulePanel
-                  projectType={project.projectType as ProjectType}
-                  grandOpeningDate={project.grandOpeningDate}
-                  savedState={savedSfState}
-                  onUpdate={handleSfScheduleUpdate}
-                />
-              )}
 
               {/* Existing Gantt Chart */}
               <GanttChart

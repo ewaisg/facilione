@@ -28,7 +28,8 @@
       "Bash(node -e ' *)",
       "Bash(node *)",
       "Bash(git config *)",
-      "Bash(git worktree *)"
+      "Bash(git worktree *)",
+      "Bash(where firebase *)"
     ]
   },
   "hooks": {
