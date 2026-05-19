@@ -18,6 +18,11 @@ import {
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { PROJECT_TYPE_LABELS } from "@/constants/project-types"
+import {
+  loadProjectScheduleSummaries,
+  summarizeProjectRootSchedule,
+  type ProjectScheduleSummary,
+} from "@/lib/sitefolio/schedule-summary"
 import type { Project, ProjectWeeklyUpdate } from "@/types"
 import type { ProjectType } from "@/types/project"
 
@@ -62,6 +67,7 @@ function formatCurrency(n: number) {
 export default function DashboardPage() {
   const { user } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
+  const [scheduleSummaries, setScheduleSummaries] = useState<Record<string, ProjectScheduleSummary>>({})
   const [dataLoading, setDataLoading] = useState(true)
   const [weeklyMap, setWeeklyMap] = useState<Record<string, ProjectWeeklyUpdate | null>>({})
   const [aiSummary, setAiSummary] = useState("")
@@ -79,6 +85,22 @@ export default function DashboardPage() {
     )
     return () => unsub()
   }, [user])
+
+  useEffect(() => {
+    if (projects.length === 0) {
+      setScheduleSummaries({})
+      return
+    }
+
+    let mounted = true
+    loadProjectScheduleSummaries(projects).then((summaries) => {
+      if (mounted) setScheduleSummaries(summaries)
+    })
+
+    return () => {
+      mounted = false
+    }
+  }, [projects])
 
   useEffect(() => {
     if (projects.length === 0) {
@@ -119,16 +141,16 @@ export default function DashboardPage() {
     return days >= 0 && days <= 14
   }).length
 
-  const today = new Date().toISOString().slice(0, 10)
   const scheduleOverdueCount = activeProjects.reduce((acc, p) => {
-    const schedule = ((p as unknown as Record<string, unknown>).sfSchedule || []) as Array<Record<string, string>>
-    const overdue = schedule.filter((m) => {
-      const actual = m.actual || ""
-      const due = m.projectedAlt || m.projected || m.baseline || ""
-      return !actual && Boolean(due) && due < today
-    }).length
-    return acc + overdue
+    const summary = scheduleSummaries[p.id] ?? summarizeProjectRootSchedule(p)
+    return acc + summary.overdue
   }, 0)
+
+  const sitefolioSyncedProjectsCount = activeProjects.filter((p) => scheduleSummaries[p.id]?.source === "sitefolio").length
+  const latestSiteFolioSyncAt = activeProjects
+    .map((p) => scheduleSummaries[p.id]?.lastSyncAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
 
   const weeklyStaleCount = activeProjects.filter((p) => {
     const w = weeklyMap[p.id]
@@ -302,6 +324,50 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Data freshness */}
+      <Card>
+        <CardContent className="p-4">
+          {dataLoading ? (
+            <div className="h-12 rounded bg-muted animate-pulse" />
+          ) : (
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  SiteFolio Data Freshness
+                </p>
+                <p className="text-sm font-medium mt-1">
+                  {sitefolioSyncedProjectsCount} of {activeProjects.length} active projects using synced schedules
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {latestSiteFolioSyncAt
+                    ? `Latest sync: ${new Date(latestSiteFolioSyncAt).toLocaleString()}`
+                    : "No SiteFolio schedule sync metadata found yet."}
+                </p>
+              </div>
+              <div className="w-full md:w-72 space-y-1.5">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Synced coverage</span>
+                  <span>
+                    {activeProjects.length > 0
+                      ? Math.round((sitefolioSyncedProjectsCount / activeProjects.length) * 100)
+                      : 0}
+                    %
+                  </span>
+                </div>
+                <Progress
+                  value={
+                    activeProjects.length > 0
+                      ? Math.round((sitefolioSyncedProjectsCount / activeProjects.length) * 100)
+                      : 0
+                  }
+                  className="h-2"
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Portfolio Action Center + AI Brief */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

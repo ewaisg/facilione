@@ -15,9 +15,15 @@ import {
 } from "lucide-react"
 import { cn, getHealthColor, getHealthLabel, getProjectTypeColor } from "@/lib/utils"
 import { PROJECT_TYPE_LABELS } from "@/constants/project-types"
+import {
+  EMPTY_SCHEDULE_SUMMARY,
+  loadProjectScheduleSummaries,
+  summarizeProjectRootSchedule,
+  type ProjectScheduleSummary,
+} from "@/lib/sitefolio/schedule-summary"
 import type { HealthStatus, ProjectType, Project } from "@/types"
 
-const ALL_TYPES = ["All", "NS", "ER", "WIW", "FC", "MC"] as const
+const ALL_TYPES = ["All", "NS", "ER", "WIW", "FC", "MC", "F&D"] as const
 type FilterType = (typeof ALL_TYPES)[number]
 type TimingFilter = "all" | "overdue" | "dueSoon"
 
@@ -27,74 +33,12 @@ function formatCurrency(n: number) {
   return `$${n}`
 }
 
-interface ScheduleMilestonePreview {
-  label: string
-  baseline?: string
-  projected?: string
-  projectedAlt?: string
-  actual?: string
-}
-
-interface ScheduleProgressPreview {
-  total: number
-  done: number
-  open: number
-  overdue: number
-  pct: number
-  nextLabel: string | null
-  nextDate: string | null
-}
-
-function getScheduleProgress(project: Project): ScheduleProgressPreview {
-  const schedule = ((project as unknown as Record<string, unknown>).sfSchedule || []) as ScheduleMilestonePreview[]
-  if (!Array.isArray(schedule) || schedule.length === 0) {
-    return {
-      total: 0,
-      done: 0,
-      open: 0,
-      overdue: 0,
-      pct: 0,
-      nextLabel: null,
-      nextDate: null,
-    }
-  }
-
-  const today = new Date().toISOString().slice(0, 10)
-  const normalized = schedule.map((m) => {
-    const effectiveDue = m.projectedAlt || m.projected || m.baseline || ""
-    const done = Boolean(m.actual)
-    const overdue = Boolean(!done && effectiveDue && effectiveDue < today)
-    return {
-      label: m.label,
-      effectiveDue,
-      done,
-      overdue,
-    }
-  })
-
-  const done = normalized.filter((m) => m.done).length
-  const openRows = normalized.filter((m) => !m.done)
-  const overdue = openRows.filter((m) => m.overdue).length
-  const next = openRows
-    .filter((m) => Boolean(m.effectiveDue))
-    .sort((a, b) => a.effectiveDue.localeCompare(b.effectiveDue))[0]
-
-  return {
-    total: normalized.length,
-    done,
-    open: openRows.length,
-    overdue,
-    pct: normalized.length > 0 ? Math.round((done / normalized.length) * 100) : 0,
-    nextLabel: next?.label || null,
-    nextDate: next?.effectiveDue || null,
-  }
-}
-
 export default function ProjectsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
+  const [scheduleSummaries, setScheduleSummaries] = useState<Record<string, ProjectScheduleSummary>>({})
   const [dataLoading, setDataLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<FilterType>("All")
@@ -112,6 +56,22 @@ export default function ProjectsPage() {
     )
     return () => unsub()
   }, [user])
+
+  useEffect(() => {
+    if (projects.length === 0) {
+      setScheduleSummaries({})
+      return
+    }
+
+    let mounted = true
+    loadProjectScheduleSummaries(projects).then((summaries) => {
+      if (mounted) setScheduleSummaries(summaries)
+    })
+
+    return () => {
+      mounted = false
+    }
+  }, [projects])
 
   useEffect(() => {
     const timing = searchParams.get("timing")
@@ -262,7 +222,7 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((p) => (
             (() => {
-              const schedule = getScheduleProgress(p)
+              const schedule = scheduleSummaries[p.id] ?? summarizeProjectRootSchedule(p) ?? EMPTY_SCHEDULE_SUMMARY
               return (
             <Card
               key={p.id}
@@ -348,11 +308,11 @@ export default function ProjectsPage() {
                     <div className="rounded-md border bg-muted/20 px-2.5 py-2 text-[11px] text-muted-foreground">
                       {schedule.nextLabel && schedule.nextDate ? (
                         <>
-                          <span className="uppercase tracking-wide">Next</span>: <span className="font-medium text-foreground">{schedule.nextLabel}</span>
+                          <span className="uppercase tracking-wide">{schedule.source === "sitefolio" ? "SiteFolio next" : "Next"}</span>: <span className="font-medium text-foreground">{schedule.nextLabel}</span>
                           <span> ({new Date(schedule.nextDate).toLocaleDateString()})</span>
                         </>
                       ) : (
-                        <span>Template schedule is active. Import SiteFolio dates in Admin only when available.</span>
+                        <span>No synced SiteFolio schedule yet. Use Admin sync or manual schedule data.</span>
                       )}
                     </div>
                   </div>

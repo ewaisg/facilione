@@ -4,42 +4,26 @@ import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ArrowLeft, CalendarDays, DollarSign,
-  GanttChartSquare, Wallet, ClipboardList,
-  CheckSquare, BarChart3, Loader2, Sparkles,
-  Bot, LayoutDashboard, Users
+  GanttChartSquare, ClipboardList,
+  CheckSquare, Loader2,
+  Bot, LayoutDashboard, FileText
 } from "lucide-react"
 import { getHealthColor, getHealthLabel, getProjectTypeColor, formatCurrency, formatDate } from "@/lib/utils"
-import { getProject, subscribeToPhases, updateMilestoneDate, updateProject } from "@/lib/firebase/firestore"
-import { IpeccBuilder } from "@/components/reports/ipecc-builder"
+import { getProject, subscribeToPhases, updateMilestoneDate } from "@/lib/firebase/firestore"
 import { ProjectFormsTab } from "@/components/forms/project-forms-tab"
-import { TaskKanbanBoard } from "@/components/tasks/task-kanban-board"
+import { ProjectTasksWorkspace } from "@/components/tasks/project-tasks-workspace"
 import type { HealthStatus, ProjectType, Project, Phase } from "@/types"
 import { GanttChart } from "@/components/schedule/gantt-chart"
 import { toast } from "sonner"
 import { CopilotInlinePanel } from "@/components/copilot/inline-panel"
-import { AiWeeklyStatus } from "@/components/reports/ai-weekly-status"
-import { AiScheduleStatus } from "@/components/reports/ai-schedule-status"
 import { SfSyncedSchedule } from "@/components/sitefolio/sf-synced-schedule"
 import { SfOverviewPanel } from "@/components/sitefolio/sf-overview-panel"
 import { SfOverviewTab } from "@/components/sitefolio/sf-overview-tab"
-import { SfTeamTab } from "@/components/sitefolio/sf-team-tab"
-
-function PlaceholderTab({ label, icon: Icon, note }: { label: string; icon: React.ElementType; note?: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
-      <div className="size-14 rounded-2xl bg-muted flex items-center justify-center">
-        <Icon className="size-7 opacity-40" />
-      </div>
-      <p className="font-medium text-sm">{label}</p>
-      <p className="text-xs">{note || "Coming in Phase 2"}</p>
-    </div>
-  )
-}
+import { SfReportsTab } from "@/components/sitefolio/sf-reports-tab"
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -102,11 +86,9 @@ export default function ProjectDetailPage() {
     const allowedTabs = [
       "overview",
       "schedule",
-      "budget",
       "forms",
       "tasks",
       "reports",
-      "team",
     ]
 
     if (allowedTabs.includes(requestedTab)) {
@@ -199,12 +181,10 @@ export default function ProjectDetailPage() {
                   ? [{ value: "overview", label: "Overview", icon: LayoutDashboard }]
                   : []),
                 { value: "schedule", label: "Schedule", icon: GanttChartSquare },
-                { value: "budget", label: "Budget", icon: Wallet },
                 { value: "forms", label: "Forms", icon: ClipboardList },
                 { value: "tasks", label: "Tasks", icon: CheckSquare },
-                { value: "reports", label: "Reports", icon: BarChart3 },
                 ...(project.sfProjectId
-                  ? [{ value: "team", label: "Team", icon: Users }]
+                  ? [{ value: "reports", label: "Reports", icon: FileText }]
                   : []),
               ].map((tab) => (
                 <TabsTrigger
@@ -223,7 +203,7 @@ export default function ProjectDetailPage() {
             {/* Overview Tab — SiteFolio full overview (only shown for linked projects) */}
             {project.sfProjectId && (
               <TabsContent value="overview" className="mt-0">
-                <SfOverviewTab projectId={id} />
+                <SfOverviewTab project={project} />
               </TabsContent>
             )}
 
@@ -256,65 +236,13 @@ export default function ProjectDetailPage() {
               )}
 
 
-              {/* Existing Gantt Chart */}
-              <GanttChart
-                phases={phases}
-                grandOpeningDate={project.grandOpeningDate}
-                onUpdateMilestone={handleUpdateMilestone}
-              />
-            </TabsContent>
-
-            <TabsContent value="budget" className="p-6 max-w-7xl mx-auto mt-0 space-y-6">
-              <div>
-                <h3 className="text-base font-semibold">Budget & Cost Tools</h3>
-                <p className="text-xs text-muted-foreground">Access estimating and cost review tools for this project.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Sparkles className="size-4 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-sm">Estimator</CardTitle>
-                        <CardDescription className="text-xs">Create and compare cost estimates</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Build detailed cost estimates using comparable projects, presets, and AI-assisted analysis.
-                    </p>
-                    <Link href={`/smart-tools/estimator?projectId=${project.id}`}>
-                      <Button size="sm" className="w-full">Open Estimator</Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <DollarSign className="size-4 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-sm">Cost Review</CardTitle>
-                        <CardDescription className="text-xs">PM cost review and reconciliation</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Review actuals, commitments, and forecasts against budget. Reconcile with Oracle reports.
-                    </p>
-                    <Button size="sm" variant="outline" className="w-full" disabled>
-                      Coming Soon
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
+              {phases.length > 0 && (
+                <GanttChart
+                  phases={phases}
+                  grandOpeningDate={project.grandOpeningDate}
+                  onUpdateMilestone={handleUpdateMilestone}
+                />
+              )}
             </TabsContent>
             <TabsContent value="forms" className="mt-0">
               <ProjectFormsTab
@@ -323,41 +251,11 @@ export default function ProjectDetailPage() {
               />
             </TabsContent>
             <TabsContent value="tasks" className="p-6 max-w-7xl mx-auto mt-0">
-              <TaskKanbanBoard phases={phases} projectId={id} />
+              <ProjectTasksWorkspace project={project} />
             </TabsContent>
-            <TabsContent value="reports" className="p-6 max-w-7xl mx-auto mt-0 space-y-6">
-              <div>
-                <h3 className="text-base font-semibold">Reports</h3>
-                <p className="text-xs text-muted-foreground">Project reports, status summaries, and IPECC packet generation.</p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                {/* IPECC Builder */}
-                <Card className="md:col-span-3">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-sm">IPECC Builder</CardTitle>
-                      <Badge variant="warning">TBD</Badge>
-                    </div>
-                    <CardDescription>Generate IPECC packet inputs for this project.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <IpeccBuilder projectId={project.id} projectLabel={`${project.storeNumber} - ${project.storeName}`} />
-                  </CardContent>
-                </Card>
-
-                {/* Weekly Status Report — AI-drafted */}
-                <AiWeeklyStatus project={project} phases={phases} />
-
-                {/* Schedule Status Report — AI-generated */}
-                <AiScheduleStatus project={project} phases={phases} />
-              </div>
-            </TabsContent>
-
-            {/* Team Tab — SiteFolio full team directory (only shown for linked projects) */}
             {project.sfProjectId && (
-              <TabsContent value="team" className="mt-0">
-                <SfTeamTab projectId={id} />
+              <TabsContent value="reports" className="mt-0">
+                <SfReportsTab projectId={id} />
               </TabsContent>
             )}
           </div>

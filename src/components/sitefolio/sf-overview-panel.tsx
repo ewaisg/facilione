@@ -14,15 +14,12 @@ import {
   MessageSquare,
   CalendarDays,
   Users,
-  FileText,
-  ExternalLink,
   Clock,
 } from "lucide-react"
 import type {
   SiteFolioOverview,
   SiteFolioComment,
   SiteFolioTeamContact,
-  SiteFolioReportLink,
   SiteFolioSyncMeta,
   SiteFolioUpcomingMilestone,
 } from "@/types/sitefolio"
@@ -30,8 +27,6 @@ import type {
 interface SfOverviewPanelProps {
   projectId: string
 }
-
-const SITEFOLIO_BASE_URL = "https://www.sitefolio.net"
 
 function getRelativeTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -51,7 +46,6 @@ interface PanelData {
   overview: SiteFolioOverview | null
   comments: SiteFolioComment[]
   team: SiteFolioTeamContact[]
-  reports: SiteFolioReportLink[]
   upcomingMilestones: SiteFolioUpcomingMilestone[]
   syncMeta: SiteFolioSyncMeta | null
 }
@@ -64,12 +58,11 @@ export function SfOverviewPanel({ projectId }: SfOverviewPanelProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [overviewSnap, commentsSnap, teamSnap, reportsSnap, metaSnap] =
+        const [overviewSnap, commentsSnap, teamSnap, metaSnap] =
           await Promise.all([
             getDoc(doc(db, "projects", projectId, "sitefolio", "overview")),
             getDoc(doc(db, "projects", projectId, "sitefolio", "comments")),
             getDoc(doc(db, "projects", projectId, "sitefolio", "team")),
-            getDoc(doc(db, "projects", projectId, "sitefolio", "reports")),
             getDoc(doc(db, "projects", projectId, "sitefolio", "sync-meta")),
           ])
 
@@ -78,7 +71,6 @@ export function SfOverviewPanel({ projectId }: SfOverviewPanelProps) {
           : null
         const commentsData = commentsSnap.exists() ? commentsSnap.data() : null
         const teamData = teamSnap.exists() ? teamSnap.data() : null
-        const reportsData = reportsSnap.exists() ? reportsSnap.data() : null
         const syncMeta = metaSnap.exists()
           ? (metaSnap.data() as SiteFolioSyncMeta)
           : null
@@ -128,7 +120,6 @@ export function SfOverviewPanel({ projectId }: SfOverviewPanelProps) {
           overview,
           comments: (commentsData?.items as SiteFolioComment[]) ?? [],
           team: (teamData?.items as SiteFolioTeamContact[]) ?? [],
-          reports: (reportsData?.items as SiteFolioReportLink[]) ?? [],
           upcomingMilestones,
           syncMeta,
         })
@@ -181,10 +172,10 @@ export function SfOverviewPanel({ projectId }: SfOverviewPanelProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-sm">SiteFolio Overview</CardTitle>
+            <CardTitle className="text-sm">SiteFolio Sync Snapshot</CardTitle>
             {data.overview?.projectStatus && (
               <Badge variant="info" className="text-xs">
-                {data.overview.projectStatus}
+                Status: {data.overview.projectStatus}
               </Badge>
             )}
           </div>
@@ -309,42 +300,6 @@ export function SfOverviewPanel({ projectId }: SfOverviewPanelProps) {
                           ({contact.email})
                         </span>
                       )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Report Links */}
-          {data.reports.length > 0 && (
-            <div className="flex items-start gap-2">
-              <FileText className="size-4 text-muted-foreground mt-0.5 shrink-0" />
-              <div className="text-xs space-y-1">
-                <span className="font-medium text-muted-foreground">
-                  Reports
-                </span>
-                <ul className="space-y-0.5">
-                  {data.reports.map((report, i) => (
-                    <li key={i}>
-                      <a
-                        href={
-                          report.url.startsWith("http")
-                            ? report.url
-                            : `${SITEFOLIO_BASE_URL}${report.url}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center gap-1"
-                      >
-                        {report.name}
-                        {report.format && (
-                          <span className="text-muted-foreground">
-                            ({report.format})
-                          </span>
-                        )}
-                        <ExternalLink className="size-3" />
-                      </a>
                     </li>
                   ))}
                 </ul>

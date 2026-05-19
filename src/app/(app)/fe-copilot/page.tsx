@@ -28,9 +28,7 @@ import {
   ShieldCheck,
   Clock,
   FileText,
-  BarChart2,
   Search,
-  Mail,
   Zap,
 } from "lucide-react"
 
@@ -62,12 +60,6 @@ const QUICK_ACTIONS: QuickAction[] = [
     prompt: "What are the current schedule deviations I need to address?",
   },
   {
-    icon: BarChart2,
-    label: "Budget Analysis",
-    description: "Analyze budget vs actuals",
-    prompt: "Analyze the budget variance on my project and flag any concerns.",
-  },
-  {
     icon: FileText,
     label: "Draft Communication",
     description: "Draft a stakeholder update or email",
@@ -78,12 +70,6 @@ const QUICK_ACTIONS: QuickAction[] = [
     label: "Historical Search",
     description: "Find similar past projects",
     prompt: "Find historical projects similar to mine for benchmark comparison.",
-  },
-  {
-    icon: Mail,
-    label: "Document Review",
-    description: "Review a document for compliance",
-    prompt: "Review my latest project document for SOP compliance issues.",
   },
   {
     icon: Zap,
@@ -104,7 +90,7 @@ export default function FeCopilotPage() {
   const [streamCitations, setStreamCitations] = useState<string[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [messagesLoading, setMessagesLoading] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 

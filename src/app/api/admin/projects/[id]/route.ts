@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebase-admin"
 import { requireRoles } from "@/lib/firebase-admin/request-auth"
+import { buildAdminProjectPayload } from "@/lib/admin/project-validation"
+import { deleteProjectCascade } from "@/lib/firebase-admin/project-cleanup"
 
 /**
  * PATCH /api/admin/projects/[id]
@@ -17,23 +19,28 @@ export async function PATCH(
     const { id } = await params
     const body = await req.json()
 
-    // Only allow specific fields to be updated
-    const allowed = [
-      "storeNumber", "storeName", "storeAddress", "storeCity", "storeState",
-      "projectType", "status", "healthStatus", "grandOpeningDate",
-      "oracleParentProject", "oracleProjectNumber", "totalBudget", "notes",
-    ]
-    const updates: Record<string, unknown> = {}
-    for (const key of allowed) {
-      if (key in body) updates[key] = body[key]
+    let updates: Record<string, unknown>
+    try {
+      updates = buildAdminProjectPayload(body, { partial: true }) as Record<string, unknown>
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Invalid project payload" },
+        { status: 400 },
+      )
     }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
     }
 
+    const projectRef = adminDb.collection("projects").doc(id)
+    const projectSnap = await projectRef.get()
+    if (!projectSnap.exists) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
     updates.updatedAt = new Date().toISOString()
-    await adminDb.collection("projects").doc(id).update(updates)
+    await projectRef.update(updates)
 
     return NextResponse.json({ success: true, id, updates })
   } catch (err: unknown) {
@@ -56,16 +63,9 @@ export async function DELETE(
 
     const { id } = await params
 
-    // Delete sub-collections first (phases)
-    const phasesSnap = await adminDb.collection("projects").doc(id).collection("phases").get()
-    const batch = adminDb.batch()
-    phasesSnap.docs.forEach((doc) => batch.delete(doc.ref))
-    await batch.commit()
+    const summary = await deleteProjectCascade(id)
 
-    // Delete project document
-    await adminDb.collection("projects").doc(id).delete()
-
-    return NextResponse.json({ success: true, id })
+    return NextResponse.json({ success: true, id, summary })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to delete project"
     return NextResponse.json({ error: message }, { status: 500 })

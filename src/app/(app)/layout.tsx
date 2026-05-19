@@ -22,6 +22,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router])
 
   useEffect(() => {
+    if (pathname.startsWith("/fe-copilot")) {
+      setCollapsed(true)
+    }
+  }, [pathname])
+
+  useEffect(() => {
     if (loading || !user) return
     if (canAccessPath(user.role, pathname)) {
       lastDeniedPathRef.current = null

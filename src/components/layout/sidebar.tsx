@@ -5,21 +5,18 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   FolderKanban,
-  Users,
   Bot,
   Wrench,
   BookOpen,
   ShieldCheck,
-  Building2,
   ChevronLeft,
   ChevronRight,
   FileText,
   GitBranch,
-  CheckSquare,
+  Settings,
 } from "lucide-react"
-import { cn, getInitials } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/firebase/auth-context"
 import { useBranding } from "@/lib/hooks/use-branding"
 import { canSeeNavItem } from "@/lib/access-control"
@@ -37,8 +34,6 @@ export interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Projects", href: "/projects", icon: FolderKanban },
-  { label: "Tasks", href: "/tasks", icon: CheckSquare },
-  { label: "Team", href: "/team", icon: Users },
   { label: "FE Copilot", href: "/fe-copilot", icon: Bot },
   { label: "Smart Tools", href: "/smart-tools", icon: Wrench },
   {
@@ -50,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Flowcharts", href: "/resources/flowcharts", icon: GitBranch },
     ],
   },
+  { label: "Reports", href: "/reports", icon: FileText },
   { label: "Admin", href: "/admin", icon: ShieldCheck, allowedRoles: ["admin"] },
 ]
 
@@ -73,12 +69,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className={cn("flex items-center gap-3 px-4 border-b border-white/10 shrink-0", "h-14")}>
-        {logoUrl ? (
+        {logoUrl && (
           <img src={logoUrl} alt="Logo" className="size-8 rounded-lg object-contain shrink-0" />
-        ) : (
-          <div className="flex items-center justify-center size-8 rounded-lg bg-white/10 shrink-0">
-            <Building2 className="size-4 text-white" />
-          </div>
         )}
         {!collapsed && (
           <span className="font-bold text-base tracking-tight whitespace-nowrap overflow-hidden">
@@ -155,7 +147,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
-      {/* User profile + collapse toggle */}
+      {/* Bottom actions */}
       <div className="border-t border-white/10 px-2 py-3 shrink-0">
         <div
           className={cn(
@@ -163,38 +155,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             collapsed ? "flex-col" : "flex-row",
           )}
         >
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="/profile"
-                  className="flex items-center justify-center rounded-lg p-1 hover:bg-white/10 transition-all"
-                >
-                  <Avatar className="size-8">
-                    <AvatarFallback className="bg-white/15 text-white text-xs">
-                      {user?.displayName ? getInitials(user.displayName) : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">{user?.displayName ?? "Profile"}</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Link
-              href="/profile"
-              className="flex items-center gap-2.5 flex-1 min-w-0 rounded-lg px-2 py-1.5 hover:bg-white/10 transition-all"
-            >
-              <Avatar className="size-8 shrink-0">
-                <AvatarFallback className="bg-white/15 text-white text-xs">
-                  {user?.displayName ? getInitials(user.displayName) : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-white/80 truncate">
-                {user?.displayName ?? "User"}
-              </span>
-            </Link>
-          )}
-
+          <SettingsLink collapsed={collapsed} active={pathname.startsWith("/settings")} />
           <button
             onClick={onToggle}
             className={cn(
@@ -210,5 +171,31 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </div>
       </div>
     </aside>
+  )
+}
+
+function SettingsLink({ collapsed, active }: { collapsed: boolean; active: boolean }) {
+  const linkContent = (
+    <Link
+      href="/settings"
+      className={cn(
+        "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-100",
+        "hover:bg-white/10",
+        active ? "bg-white/15 text-white" : "text-white/65 hover:text-white",
+        collapsed ? "justify-center size-8 px-0" : "flex-1 min-w-0 px-3 py-2.5",
+      )}
+    >
+      <Settings className={cn("shrink-0", collapsed ? "size-5" : "size-4")} />
+      {!collapsed && <span className="truncate">Settings</span>}
+    </Link>
+  )
+
+  if (!collapsed) return linkContent
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+      <TooltipContent side="right">Settings</TooltipContent>
+    </Tooltip>
   )
 }

@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 import type { TaskFilter, Task } from "@/types"
 
 const FILTERS: Array<{ key: TaskFilter; label: string }> = [
-  { key: "open", label: "Open" },
   { key: "all", label: "All" },
+  { key: "open", label: "Open" },
   { key: "do-now", label: "Do Now" },
   { key: "waiting", label: "Waiting" },
   { key: "blocked", label: "Blocked" },

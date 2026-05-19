@@ -17,7 +17,6 @@ import {
   Calendar,
   CalendarCheck,
   Loader2,
-  AlertCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Phase, ChecklistItem } from "@/types/schedule"
@@ -124,21 +123,7 @@ export function GanttChart({
     }
   }
 
-  if (phases.length === 0) {
-    return (
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center text-center gap-3">
-          <AlertCircle className="size-12 text-muted-foreground/50" />
-          <div>
-            <p className="font-semibold text-sm">No schedule data available</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Phases and milestones will appear here once seeded from the template.
-            </p>
-          </div>
-        </div>
-      </Card>
-    )
-  }
+  if (phases.length === 0) return null
 
   return (
     <>

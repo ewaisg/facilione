@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, useCallback } from "react"
 import { useAuth } from "@/lib/firebase/auth-context"
 import {
   createSession,
-  getSessionMessages,
   addMessage,
   updateSessionTitle,
 } from "@/lib/firebase/ai-sessions"
@@ -20,7 +19,6 @@ import {
   ExternalLink,
   ListChecks,
   ShieldCheck,
-  BarChart2,
   Mail,
 } from "lucide-react"
 import Link from "next/link"
@@ -247,7 +245,6 @@ export function CopilotInlinePanel({
               {[
                 { icon: ListChecks, label: "Next Actions", prompt: "What are the next actions I should take for this project based on the SOP?" },
                 { icon: ShieldCheck, label: "Gate Check", prompt: "Am I ready to pass the next gate? What requirements are still missing?" },
-                { icon: BarChart2, label: "Budget Analysis", prompt: "Analyze the budget variance on this project and flag any concerns." },
                 { icon: Mail, label: "Draft Update", prompt: "Draft a brief status update communication for stakeholders on this project." },
               ].map(({ icon: Icon, label, prompt }) => (
                 <Tooltip key={label}>

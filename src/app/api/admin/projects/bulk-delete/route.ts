@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { adminDb } from "@/lib/firebase-admin"
 import { requireRoles } from "@/lib/firebase-admin/request-auth"
+import { deleteProjectCascade } from "@/lib/firebase-admin/project-cleanup"
 
 export async function POST(req: NextRequest) {
   const auth = await requireRoles(req, ["admin"])
@@ -8,9 +8,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const ids: string[] = body.ids
+    const ids: string[] = Array.isArray(body.ids)
+      ? Array.from(new Set(body.ids.map((id: unknown) => String(id || "").trim()).filter(Boolean)))
+      : []
 
-    if (!Array.isArray(ids) || ids.length === 0) {
+    if (ids.length === 0) {
       return NextResponse.json({ error: "ids array is required" }, { status: 400 })
     }
 
@@ -23,19 +25,7 @@ export async function POST(req: NextRequest) {
 
     for (const id of ids) {
       try {
-        const projectRef = adminDb.collection("projects").doc(id)
-
-        const subcollections = ["phases", "sitefolio"]
-        for (const sub of subcollections) {
-          const snap = await projectRef.collection(sub).get()
-          if (!snap.empty) {
-            const batch = adminDb.batch()
-            snap.docs.forEach((d) => batch.delete(d.ref))
-            await batch.commit()
-          }
-        }
-
-        await projectRef.delete()
+        await deleteProjectCascade(id)
         deleted++
       } catch (err) {
         errors.push({

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { adminAuth, adminDb } from "@/lib/firebase-admin"
 import { requireRoles } from "@/lib/firebase-admin/request-auth"
 
+const VALID_USER_ROLES = new Set(["admin", "cm", "pm"])
+
 /**
  * PATCH /api/admin/users/[uid]
  * Update user role or displayName
@@ -19,8 +21,30 @@ export async function PATCH(
     const { role, displayName } = body
 
     const updates: Record<string, unknown> = {}
-    if (role) updates.role = role
-    if (displayName) updates.displayName = displayName
+    if ("role" in body) {
+      if (typeof role !== "string" || !VALID_USER_ROLES.has(role)) {
+        return NextResponse.json(
+          { error: "role must be one of: admin, cm, pm" },
+          { status: 400 },
+        )
+      }
+      updates.role = role
+    }
+    if ("displayName" in body) {
+      if (typeof displayName !== "string" || !displayName.trim()) {
+        return NextResponse.json(
+          { error: "displayName must be a non-empty string" },
+          { status: 400 },
+        )
+      }
+      if (displayName.trim().length > 120) {
+        return NextResponse.json(
+          { error: "displayName must be 120 characters or fewer" },
+          { status: 400 },
+        )
+      }
+      updates.displayName = displayName.trim()
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 })
@@ -30,8 +54,8 @@ export async function PATCH(
     await adminDb.collection("users").doc(uid).update(updates)
 
     // Update Firebase Auth display name if changed
-    if (displayName) {
-      await adminAuth.updateUser(uid, { displayName })
+    if (typeof updates.displayName === "string") {
+      await adminAuth.updateUser(uid, { displayName: updates.displayName })
     }
 
     return NextResponse.json({ success: true, uid, updates })

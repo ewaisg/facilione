@@ -23,6 +23,7 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { updateCachedBrandingLogo } from "@/lib/hooks/use-branding"
 import { PROJECT_TYPE_LABELS } from "@/constants/project-types"
 import type { ProjectType } from "@/types/project"
 
@@ -121,7 +122,12 @@ interface AdminAiConfig {
   }
 }
 
-const ADMIN_TABS = new Set(["users", "projects", "ai-setup", "sitefolio", "branding"])
+const ADMIN_TABS = new Set(["users", "projects", "ai-setup", "branding"])
+
+function resolveAdminTab(tabParam: string | null) {
+  if (tabParam === "sitefolio") return "projects"
+  return tabParam && ADMIN_TABS.has(tabParam) ? tabParam : "users"
+}
 
 function EstimateLoaderTab() {
   const [projectId, setProjectId] = useState("")
@@ -189,16 +195,15 @@ function EstimateLoaderTab() {
 export default function AdminPage() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
-  const initialTab = tabParam && ADMIN_TABS.has(tabParam) ? tabParam : "users"
+  const initialTab = resolveAdminTab(tabParam)
   const [activeTab, setActiveTab] = useState(initialTab)
 
   useEffect(() => {
-    const nextTab = tabParam && ADMIN_TABS.has(tabParam) ? tabParam : "users"
-    setActiveTab(nextTab)
+    setActiveTab(resolveAdminTab(tabParam))
   }, [tabParam])
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <ShieldCheck className="size-5" />
@@ -210,7 +215,7 @@ export default function AdminPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users" className="gap-1.5 text-xs">
             <Users className="size-3.5" /> Users
           </TabsTrigger>
@@ -220,18 +225,18 @@ export default function AdminPage() {
           <TabsTrigger value="ai-setup" className="gap-1.5 text-xs">
             <Bot className="size-3.5" /> AI Setup
           </TabsTrigger>
-          <TabsTrigger value="sitefolio" className="gap-1.5 text-xs">
-            <Globe className="size-3.5" /> SiteFolio
-          </TabsTrigger>
           <TabsTrigger value="branding" className="gap-1.5 text-xs">
             <ImageIcon className="size-3.5" /> Branding
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersTab /></TabsContent>
-        <TabsContent value="projects"><ProjectsTab /><EstimateLoaderTab /></TabsContent>
+        <TabsContent value="projects" className="space-y-4">
+          <SiteFolioProjectsPanel />
+          <ProjectsTab />
+          <EstimateLoaderTab />
+        </TabsContent>
         <TabsContent value="ai-setup"><AiSetupTab /></TabsContent>
-        <TabsContent value="sitefolio"><SiteFolioTab /></TabsContent>
         <TabsContent value="branding"><BrandingTab /></TabsContent>
       </Tabs>
     </div>
@@ -1664,7 +1669,7 @@ function AiSetupTab() {
 }
 
 // ══════════════════════════════════════════════
-// SITEFOLIO TAB
+// SITEFOLIO PROJECTS PANEL
 // ══════════════════════════════════════════════
 
 function relativeTime(iso: string): string {
@@ -1735,7 +1740,7 @@ interface SiteFolioImportResult {
   errors: { projectNumber: string; error: string }[]
 }
 
-function SiteFolioTab() {
+function SiteFolioProjectsPanel() {
   const [sessionStatus, setSessionStatus] = useState<SiteFolioSessionStatus | null>(null)
   const [sessionLoading, setSessionLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SiteFolioSyncStatus | null>(null)
@@ -2354,6 +2359,7 @@ function BrandingTab() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Upload failed")
       setLogoUrl(data.logoUrl)
+      updateCachedBrandingLogo(data.logoUrl || null)
       toast.success("Logo uploaded successfully")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload logo")
@@ -2364,13 +2370,14 @@ function BrandingTab() {
   }
 
   const handleDelete = async () => {
-    if (!confirm("Remove the current logo? The app will revert to the default icon.")) return
+    if (!confirm("Remove the current logo? No logo will be displayed until a new one is uploaded.")) return
     setDeleting(true)
     try {
       const res = await authedFetch("/api/admin/branding", { method: "DELETE" })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Delete failed")
       setLogoUrl(null)
+      updateCachedBrandingLogo(null)
       toast.success("Logo removed")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to remove logo")
@@ -2409,11 +2416,11 @@ function BrandingTab() {
                     className="max-h-32 max-w-64 object-contain rounded-lg border bg-white p-2"
                   />
                 ) : (
-                  <div className="flex flex-col items-center gap-2 py-4">
-                    <div className="size-16 rounded-xl bg-primary flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">F</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">No custom logo set — using default</p>
+                  <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed bg-background px-6 py-8">
+                    <ImageIcon className="size-8 text-muted-foreground/50" />
+                    <p className="text-xs text-muted-foreground">
+                      No logo set. The login page and sidebar will show no logo.
+                    </p>
                   </div>
                 )}
               </div>

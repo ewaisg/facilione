@@ -9,6 +9,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function hasRole(role) {
       return getUserDoc().role == role;
     }
@@ -44,6 +48,38 @@ service cloud.firestore {
              || isManagingCM(proj);
     }
 
+    function canAccessTaskProject(taskProjectId) {
+      let taskProject = get(/databases/$(database)/documents/taskProjects/$(taskProjectId)).data;
+      return isAdmin()
+             || request.auth.uid == taskProject.createdBy
+             || (taskProject.linkedProjectId != null
+                 && canAccessLinkedProject(taskProject.linkedProjectId));
+    }
+
+    function validTaskProjectCreate() {
+      return isSignedIn()
+             && request.resource.data.createdBy == request.auth.uid
+             && request.resource.data.orgId == getUserDoc().orgId
+             && (!('linkedProjectId' in request.resource.data)
+                 || request.resource.data.linkedProjectId == null
+                 || canAccessLinkedProject(request.resource.data.linkedProjectId));
+    }
+
+    function validTaskProjectUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'code',
+        'name',
+        'priority',
+        'priorityLevel',
+        'status',
+        'gcInfo',
+        'notes',
+        'projectInfo',
+        'migrated',
+        'updatedAt'
+      ]);
+    }
+
     // ─── User Documents ─────────────────────────────────────────
 
     match /users/{userId} {
@@ -74,7 +110,7 @@ service cloud.firestore {
                   || isAssignedPM(resource.data)
                   || isManagingCM(resource.data);
 
-      allow create: if isAdmin() || isPM() || isCM();
+      allow create: if isAdmin();
 
       allow update: if isAdmin()
                     || isAssignedPM(resource.data)
@@ -101,7 +137,7 @@ service cloud.firestore {
 
     // ─── Knowledge Base ─────────────────────────────────────────
 
-    match /kb/{collection}/{docId} {
+    match /kb/{document=**} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
@@ -111,9 +147,13 @@ service cloud.firestore {
     match /ai-sessions/{sessionId} {
       allow read: if request.auth != null
                   && (request.auth.uid == resource.data.userId || isAdmin());
-      allow write: if request.auth != null
-                   && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+                    && (request.auth.uid == resource.data.userId || isAdmin())
+                    && request.resource.data.userId == resource.data.userId;
+      allow delete: if request.auth != null
+                    && (request.auth.uid == resource.data.userId || isAdmin());
 
       match /messages/{messageId} {
         allow read, write: if request.auth != null
@@ -127,7 +167,8 @@ service cloud.firestore {
 
     match /imports/{importId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
@@ -154,7 +195,8 @@ service cloud.firestore {
       allow create: if request.auth != null;
 
       allow update: if isAdmin()
-                    || request.auth.uid == resource.data.userId;
+                    || (request.auth.uid == resource.data.userId
+                        && request.resource.data.userId == resource.data.userId);
 
       allow delete: if isAdmin()
                     || request.auth.uid == resource.data.userId;
@@ -267,11 +309,11 @@ service cloud.firestore {
                       || (resource.data.linkedProjectId != null
                           && canAccessLinkedProject(resource.data.linkedProjectId)));
 
-      allow create: if request.auth != null;
+      allow create: if validTaskProjectCreate();
 
       allow update: if request.auth != null
-                    && (isAdmin()
-                        || request.auth.uid == resource.data.createdBy);
+                    && canAccessTaskProject(projectId)
+                    && validTaskProjectUpdate();
 
       allow delete: if request.auth != null
                     && (isAdmin()
@@ -280,49 +322,37 @@ service cloud.firestore {
       // Sections subcollection
       match /sections/{sectionId} {
         allow read, write: if request.auth != null
-                           && (isAdmin()
-                               || request.auth.uid == get(/databases/$(database)/documents/taskProjects/$(projectId)).data.createdBy);
+                           && canAccessTaskProject(projectId);
 
         // Tasks subcollection
         match /tasks/{taskId} {
           allow read, write: if request.auth != null
-                             && (isAdmin()
-                                 || request.auth.uid == get(/databases/$(database)/documents/taskProjects/$(projectId)).data.createdBy);
+                             && canAccessTaskProject(projectId);
         }
       }
 
       // Next steps subcollection
       match /nextSteps/{stepId} {
         allow read, write: if request.auth != null
-                           && (isAdmin()
-                               || request.auth.uid == get(/databases/$(database)/documents/taskProjects/$(projectId)).data.createdBy);
+                           && canAccessTaskProject(projectId);
       }
 
       // Flat tasks subcollection (v2)
       match /tasks/{taskId} {
         allow read, write: if request.auth != null
-                           && (isAdmin()
-                               || request.auth.uid == get(/databases/$(database)/documents/taskProjects/$(projectId)).data.createdBy
-                               || (get(/databases/$(database)/documents/taskProjects/$(projectId)).data.linkedProjectId != null
-                                   && canAccessLinkedProject(get(/databases/$(database)/documents/taskProjects/$(projectId)).data.linkedProjectId)));
+                           && canAccessTaskProject(projectId);
       }
 
       // Custom fields subcollection
       match /customFields/{fieldId} {
         allow read, write: if request.auth != null
-                           && (isAdmin()
-                               || request.auth.uid == get(/databases/$(database)/documents/taskProjects/$(projectId)).data.createdBy
-                               || (get(/databases/$(database)/documents/taskProjects/$(projectId)).data.linkedProjectId != null
-                                   && canAccessLinkedProject(get(/databases/$(database)/documents/taskProjects/$(projectId)).data.linkedProjectId)));
+                           && canAccessTaskProject(projectId);
       }
 
       // History snapshots subcollection
       match /history/{dateId} {
         allow read, write: if request.auth != null
-                           && (isAdmin()
-                               || request.auth.uid == get(/databases/$(database)/documents/taskProjects/$(projectId)).data.createdBy
-                               || (get(/databases/$(database)/documents/taskProjects/$(projectId)).data.linkedProjectId != null
-                                   && canAccessLinkedProject(get(/databases/$(database)/documents/taskProjects/$(projectId)).data.linkedProjectId)));
+                           && canAccessTaskProject(projectId);
       }
     }
   }

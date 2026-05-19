@@ -2,8 +2,8 @@
 
 import { useRef } from "react"
 import { cn } from "@/lib/utils"
-import { TaskStatusBadge, getNextStatus } from "./task-status-badge"
-import { TaskPriorityBadge, getNextPriority } from "./task-priority-badge"
+import { TaskStatusBadge } from "./task-status-badge"
+import { TaskPriorityBadge } from "./task-priority-badge"
 import { Plus, Trash2 } from "lucide-react"
 import { TASK_PRIORITY_SORT } from "@/types/task"
 import type { Task, TaskFilter } from "@/types"

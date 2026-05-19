@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useBranding } from "@/lib/hooks/use-branding"
 
@@ -55,11 +55,7 @@ function LoginForm() {
       <div className="flex flex-col items-center mb-8">
         {logoUrl ? (
           <img src={logoUrl} alt="Logo" className="h-12 max-w-48 object-contain mb-4" />
-        ) : (
-          <div className="flex items-center justify-center size-12 rounded-xl bg-primary mb-4 shadow-lg">
-            <Building2 className="size-6 text-white" />
-          </div>
-        )}
+        ) : null}
         <h1 className="text-2xl font-bold text-foreground tracking-tight">FaciliOne</h1>
         <p className="text-sm text-muted-foreground mt-1">Facilities Engineering PM Platform</p>
       </div>
