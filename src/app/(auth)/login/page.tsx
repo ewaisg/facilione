@@ -57,7 +57,6 @@ function LoginForm() {
           <img src={logoUrl} alt="Logo" className="h-12 max-w-48 object-contain mb-4" />
         ) : null}
         <h1 className="text-2xl font-bold text-foreground tracking-tight">FaciliOne</h1>
-        <p className="text-sm text-muted-foreground mt-1">Facilities Engineering PM Platform</p>
       </div>
 
       <Card className="shadow-xl border-0 ring-1 ring-black/5">
@@ -132,9 +131,7 @@ function LoginForm() {
         </form>
       </Card>
 
-      <p className="text-center text-xs text-muted-foreground mt-6">
-        Access is by invitation only. Contact your administrator to get an account.
-      </p>
+
     </div>
   )
 }
